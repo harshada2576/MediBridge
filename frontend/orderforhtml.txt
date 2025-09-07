@@ -1,0 +1,64 @@
+---
+
+## 📌 Recommended Order (Based on Your Pages)
+
+### **1. General & Entry Pages**
+
+1. `index.html` → Landing/home page.
+2. `about.html` → About the platform (accessible from navbar).
+3. `contact.html` → Contact/support form.
+4. `404.html` → Error page (design later, simple).
+
+---
+
+### **2. Authentication**
+
+5. `login.html` → Common login for patients, doctors, admins.
+6. `register.html` → New patient registration (doctor/admins can be handled by admin later).
+
+---
+
+### **3. Patient Journey**
+
+7. `patient-dashboard.html` → Main hub for patient after login.
+8. `book-appointment.html` → Core feature for patients.
+9. `my-appointments.html` → View/cancel upcoming appointments.
+10. `patient-profile.html` → Update personal details & health info.
+
+---
+
+### **4. Doctor Journey**
+
+11. `doctor-dashboard.html` → Doctor’s hub after login.
+12. `doctor-appointments.html` → List of today’s patients/appointments.
+13. `doctor-patient-records.html` → View patient history & add notes/prescriptions.
+
+---
+
+### **5. Admin Journey**
+
+14. `admin-dashboard.html` → Central hub for admin.
+15. `admin-hospitals.html` → Manage hospital records.
+16. `admin-doctors.html` → Approve/manage doctors.
+17. `admin-patients.html` → Manage patients.
+
+---
+
+### **6. Utility**
+
+18. `settings.html` → Common settings (account, theme, notifications).
+
+---
+
+## ✅ Suggested Build Order
+
+To keep it smooth, build in this order:
+
+1. **index → about → contact → 404** (general shell & navbar).
+2. **login → register** (auth flow).
+3. **patient pages** (dashboard → book → my appointments → profile).
+4. **doctor pages** (dashboard → appointments → patient records).
+5. **admin pages** (dashboard → hospitals → doctors → patients).
+6. **settings** (last, polish).
+
+
