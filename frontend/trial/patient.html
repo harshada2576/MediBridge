@@ -1,0 +1,1358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Portal - MediBridge Hospital</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .medical-gradient {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .sidebar-item {
+            transition: all 0.3s ease;
+        }
+        .sidebar-item:hover {
+            background-color: #f3f4f6;
+            transform: translateX(4px);
+        }
+        .sidebar-item.active {
+            background-color: #dbeafe;
+            border-right: 4px solid #3b82f6;
+            color: #1d4ed8;
+        }
+        .section {
+            display: none;
+        }
+        .section.active {
+            display: block;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Mobile Menu Button -->
+    <button id="mobileMenuBtn" class="md:hidden fixed top-4 left-4 z-50 bg-white p-2 rounded-lg shadow-lg">
+        <i class="fas fa-bars text-gray-600"></i>
+    </button>
+
+    <!-- Sidebar -->
+    <div id="sidebar" class="sidebar fixed left-0 top-0 h-full w-64 bg-white shadow-xl z-40">
+        <div class="p-6 border-b border-gray-200">
+            <div class="flex items-center">
+                <div class="medical-gradient w-10 h-10 rounded-lg flex items-center justify-center mr-3">
+                    <i class="fas fa-heartbeat text-white text-xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-lg font-bold text-gray-800">MediBridge</h2>
+                    <p class="text-sm text-gray-600">Patient Portal</p>
+                </div>
+            </div>
+        </div>
+
+        <nav class="mt-6">
+            <a href="#" onclick="showSection('dashboard')" class="sidebar-item active flex items-center px-6 py-3 text-gray-700">
+                <i class="fas fa-home mr-3"></i>
+                Dashboard
+            </a>
+            <a href="#" onclick="showSection('book-appointment')" class="sidebar-item flex items-center px-6 py-3 text-gray-700">
+                <i class="fas fa-calendar-plus mr-3"></i>
+                Book Appointment
+            </a>
+            <a href="#" onclick="showSection('my-appointments')" class="sidebar-item flex items-center px-6 py-3 text-gray-700">
+                <i class="fas fa-calendar-alt mr-3"></i>
+                My Appointments
+            </a>
+            <a href="#" onclick="showSection('profile')" class="sidebar-item flex items-center px-6 py-3 text-gray-700">
+                <i class="fas fa-user mr-3"></i>
+                Profile
+            </a>
+            <a href="#" onclick="showSection('reports')" class="sidebar-item flex items-center px-6 py-3 text-gray-700">
+                <i class="fas fa-file-medical mr-3"></i>
+                Reports & History
+            </a>
+            <a href="#" onclick="showSection('prescriptions')" class="sidebar-item flex items-center px-6 py-3 text-gray-700">
+                <i class="fas fa-pills mr-3"></i>
+                Prescriptions
+            </a>
+        </nav>
+
+        <div class="absolute bottom-0 w-full p-6 border-t border-gray-200">
+            <div class="flex items-center mb-4">
+                <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center mr-3">
+                    <span class="text-white font-semibold text-sm">JS</span>
+                </div>
+                <div>
+                    <p class="font-medium text-gray-800">John Smith</p>
+                    <p class="text-sm text-gray-600">Patient ID: #12345</p>
+                </div>
+            </div>
+            <button onclick="logout()" class="w-full bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition-colors">
+                <i class="fas fa-sign-out-alt mr-2"></i>
+                Logout
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="md:ml-64 min-h-screen">
+        <!-- Header -->
+        <header class="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 id="pageTitle" class="text-2xl font-bold text-gray-800">Dashboard</h1>
+                    <p class="text-gray-600">Welcome back, John!</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <!-- Notifications -->
+                    <div class="relative">
+                        <button onclick="toggleNotifications()" class="relative p-2 text-gray-600 hover:text-blue-600 transition-colors">
+                            <i class="fas fa-bell text-xl"></i>
+                            <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">3</span>
+                        </button>
+                        <div id="notificationDropdown" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+                            <div class="p-4 border-b border-gray-200">
+                                <h3 class="font-semibold text-gray-800">Notifications</h3>
+                            </div>
+                            <div class="max-h-64 overflow-y-auto">
+                                <div class="p-4 border-b border-gray-100 hover:bg-gray-50">
+                                    <div class="flex items-start space-x-3">
+                                        <div class="bg-blue-100 p-2 rounded-full">
+                                            <i class="fas fa-prescription-bottle text-blue-600 text-sm"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="text-sm font-medium text-gray-800">New prescription available</p>
+                                            <p class="text-xs text-gray-500">Dr. Johnson prescribed new medication</p>
+                                            <p class="text-xs text-gray-400 mt-1">2 hours ago</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="p-4 border-b border-gray-100 hover:bg-gray-50">
+                                    <div class="flex items-start space-x-3">
+                                        <div class="bg-green-100 p-2 rounded-full">
+                                            <i class="fas fa-check-circle text-green-600 text-sm"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="text-sm font-medium text-gray-800">Appointment confirmed</p>
+                                            <p class="text-xs text-gray-500">Your appointment with Dr. Chen is confirmed</p>
+                                            <p class="text-xs text-gray-400 mt-1">1 day ago</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="p-4 hover:bg-gray-50">
+                                    <div class="flex items-start space-x-3">
+                                        <div class="bg-orange-100 p-2 rounded-full">
+                                            <i class="fas fa-file-medical text-orange-600 text-sm"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="text-sm font-medium text-gray-800">Lab results ready</p>
+                                            <p class="text-xs text-gray-500">Your blood test results are now available</p>
+                                            <p class="text-xs text-gray-400 mt-1">2 days ago</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm text-gray-600">Today</p>
+                        <p class="text-sm font-medium text-gray-800" id="currentDate"></p>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dashboard Section -->
+        <div id="dashboard" class="section active p-6">
+            <!-- Welcome Card -->
+            <div class="medical-gradient rounded-2xl p-8 text-white mb-8">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
+                    <div>
+                        <h2 class="text-3xl font-bold mb-2">Welcome back, John!</h2>
+                        <p class="text-blue-100 text-lg">Here's your health overview for today</p>
+                    </div>
+                    <div class="mt-4 md:mt-0 text-right">
+                        <p class="text-blue-100">Next Appointment</p>
+                        <p class="text-xl font-semibold">Dec 20, 10:00 AM</p>
+                        <p class="text-blue-100">Dr. Sarah Johnson</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white rounded-xl p-6 shadow-md card-hover">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm">Upcoming Appointments</p>
+                            <p class="text-3xl font-bold text-blue-600">2</p>
+                        </div>
+                        <div class="bg-blue-100 p-3 rounded-lg">
+                            <i class="fas fa-calendar-alt text-blue-600 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl p-6 shadow-md card-hover">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm">Active Prescriptions</p>
+                            <p class="text-3xl font-bold text-green-600">3</p>
+                        </div>
+                        <div class="bg-green-100 p-3 rounded-lg">
+                            <i class="fas fa-pills text-green-600 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl p-6 shadow-md card-hover">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm">Pending Reports</p>
+                            <p class="text-3xl font-bold text-orange-600">1</p>
+                        </div>
+                        <div class="bg-orange-100 p-3 rounded-lg">
+                            <i class="fas fa-file-medical text-orange-600 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl p-6 shadow-md card-hover">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm">Health Score</p>
+                            <p class="text-3xl font-bold text-purple-600">85%</p>
+                        </div>
+                        <div class="bg-purple-100 p-3 rounded-lg">
+                            <i class="fas fa-heart text-purple-600 text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity & Quick Actions -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">Recent Activity</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
+                            <div class="bg-blue-100 p-2 rounded-full">
+                                <i class="fas fa-prescription-bottle text-blue-600"></i>
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-medium text-gray-800">New prescription added</p>
+                                <p class="text-sm text-gray-600">Lisinopril 10mg - Take once daily</p>
+                                <p class="text-xs text-gray-500">2 hours ago</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
+                            <div class="bg-green-100 p-2 rounded-full">
+                                <i class="fas fa-check-circle text-green-600"></i>
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-medium text-gray-800">Lab results available</p>
+                                <p class="text-sm text-gray-600">Blood work completed - Normal results</p>
+                                <p class="text-xs text-gray-500">1 day ago</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
+                            <div class="bg-orange-100 p-2 rounded-full">
+                                <i class="fas fa-calendar text-orange-600"></i>
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-medium text-gray-800">Appointment scheduled</p>
+                                <p class="text-sm text-gray-600">Follow-up with Dr. Johnson</p>
+                                <p class="text-xs text-gray-500">3 days ago</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">Quick Actions</h3>
+                    <div class="space-y-3">
+                        <button onclick="showSection('book-appointment')" class="w-full bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center">
+                            <i class="fas fa-calendar-plus mr-3"></i>Book New Appointment
+                        </button>
+                        <button onclick="showSection('reports')" class="w-full bg-green-600 text-white p-3 rounded-lg hover:bg-green-700 transition-colors flex items-center">
+                            <i class="fas fa-file-medical mr-3"></i>View Lab Results
+                        </button>
+                        <button onclick="showSection('prescriptions')" class="w-full bg-purple-600 text-white p-3 rounded-lg hover:bg-purple-700 transition-colors flex items-center">
+                            <i class="fas fa-pills mr-3"></i>Manage Prescriptions
+                        </button>
+                        <button onclick="contactDoctor()" class="w-full bg-orange-600 text-white p-3 rounded-lg hover:bg-orange-700 transition-colors flex items-center">
+                            <i class="fas fa-comments mr-3"></i>Message Doctor
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Book Appointment Section -->
+        <div id="book-appointment" class="section p-6">
+            <div class="max-w-4xl mx-auto">
+                <div class="bg-white rounded-xl shadow-md p-8">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">Book New Appointment</h2>
+                    
+                    <form id="appointmentForm" onsubmit="bookNewAppointment(event)">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Select Department</label>
+                                <select name="department" required onchange="loadDoctors()" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <option value="">Choose department</option>
+                                    <option value="cardiology">Cardiology</option>
+                                    <option value="dermatology">Dermatology</option>
+                                    <option value="general">General Medicine</option>
+                                    <option value="neurology">Neurology</option>
+                                    <option value="orthopedics">Orthopedics</option>
+                                    <option value="pediatrics">Pediatrics</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Select Doctor</label>
+                                <select name="doctor" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <option value="">Choose doctor</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Preferred Date</label>
+                                <input type="date" name="date" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Preferred Time</label>
+                                <select name="time" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <option value="">Choose time</option>
+                                    <option value="09:00">9:00 AM</option>
+                                    <option value="10:00">10:00 AM</option>
+                                    <option value="11:00">11:00 AM</option>
+                                    <option value="14:00">2:00 PM</option>
+                                    <option value="15:00">3:00 PM</option>
+                                    <option value="16:00">4:00 PM</option>
+                                </select>
+                            </div>
+
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Appointment Type</label>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <label class="flex items-center p-3 border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                        <input type="radio" name="appointmentType" value="consultation" class="mr-3">
+                                        <div>
+                                            <p class="font-medium">Consultation</p>
+                                            <p class="text-sm text-gray-600">General consultation</p>
+                                        </div>
+                                    </label>
+                                    <label class="flex items-center p-3 border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                        <input type="radio" name="appointmentType" value="followup" class="mr-3">
+                                        <div>
+                                            <p class="font-medium">Follow-up</p>
+                                            <p class="text-sm text-gray-600">Follow-up visit</p>
+                                        </div>
+                                    </label>
+                                    <label class="flex items-center p-3 border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                        <input type="radio" name="appointmentType" value="emergency" class="mr-3">
+                                        <div>
+                                            <p class="font-medium">Urgent</p>
+                                            <p class="text-sm text-gray-600">Urgent consultation</p>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Reason for Visit</label>
+                                <textarea name="reason" rows="4" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Please describe your symptoms or reason for the appointment..."></textarea>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end space-x-4 mt-8">
+                            <button type="button" onclick="showSection('dashboard')" class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                                Cancel
+                            </button>
+                            <button type="submit" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                                <i class="fas fa-calendar-plus mr-2"></i>Book Appointment
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- My Appointments Section -->
+        <div id="my-appointments" class="section p-6">
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">My Appointments</h2>
+                    <button onclick="showSection('book-appointment')" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-plus mr-2"></i>Book New
+                    </button>
+                </div>
+
+                <!-- Filter Tabs -->
+                <div class="flex space-x-1 mb-6 bg-gray-100 p-1 rounded-lg">
+                    <button onclick="filterAppointments('upcoming')" class="appointment-filter active flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors">
+                        Upcoming
+                    </button>
+                    <button onclick="filterAppointments('past')" class="appointment-filter flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors">
+                        Past
+                    </button>
+                    <button onclick="filterAppointments('cancelled')" class="appointment-filter flex-1 py-2 px-4 rounded-md text-sm font-medium transition-colors">
+                        Cancelled
+                    </button>
+                </div>
+
+                <!-- Appointments List -->
+                <div id="appointmentsList" class="space-y-4">
+                    <!-- Upcoming Appointments -->
+                    <div class="appointment-item upcoming border border-gray-200 rounded-lg p-6 hover:bg-gray-50 transition-colors">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between">
+                            <div class="flex items-center space-x-4 mb-4 md:mb-0">
+                                <div class="bg-blue-100 p-3 rounded-lg">
+                                    <i class="fas fa-user-md text-blue-600 text-xl"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-gray-800 text-lg">Dr. Sarah Johnson</h3>
+                                    <p class="text-gray-600">Cardiology Consultation</p>
+                                    <div class="flex items-center space-x-4 mt-2">
+                                        <span class="flex items-center text-sm text-gray-500">
+                                            <i class="fas fa-calendar mr-1"></i>
+                                            Dec 20, 2024
+                                        </span>
+                                        <span class="flex items-center text-sm text-gray-500">
+                                            <i class="fas fa-clock mr-1"></i>
+                                            10:00 AM
+                                        </span>
+                                        <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">
+                                            Confirmed
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button onclick="rescheduleAppointment(1)" class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition-colors">
+                                    <i class="fas fa-edit mr-1"></i>Reschedule
+                                </button>
+                                <button onclick="cancelAppointment(1)" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors">
+                                    <i class="fas fa-times mr-1"></i>Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="appointment-item upcoming border border-gray-200 rounded-lg p-6 hover:bg-gray-50 transition-colors">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between">
+                            <div class="flex items-center space-x-4 mb-4 md:mb-0">
+                                <div class="bg-green-100 p-3 rounded-lg">
+                                    <i class="fas fa-user-md text-green-600 text-xl"></i>
+                                </div>
+                                <div>
+                                    <h3 class="font-semibold text-gray-800 text-lg">Dr. Michael Chen</h3>
+                                    <p class="text-gray-600">General Checkup</p>
+                                    <div class="flex items-center space-x-4 mt-2">
+                                        <span class="flex items-center text-sm text-gray-500">
+                                            <i class="fas fa-calendar mr-1"></i>
+                                            Dec 25, 2024
+                                        </span>
+                                        <span class="flex items-center text-sm text-gray-500">
+                                            <i class="fas fa-clock mr-1"></i>
+                                            2:30 PM
+                                        </span>
+                                        <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs">
+                                            Pending
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button onclick="rescheduleAppointment(2)" class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition-colors">
+                                    <i class="fas fa-edit mr-1"></i>Reschedule
+                                </button>
+                                <button onclick="cancelAppointment(2)" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors">
+                                    <i class="fas fa-times mr-1"></i>Cancel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Past Appointments (Hidden by default) -->
+                    <div class="appointment-item past hidden border border-gray-200 rounded-lg p-6">
+                        <div class="flex items-center space-x-4">
+                            <div class="bg-gray-100 p-3 rounded-lg">
+                                <i class="fas fa-user-md text-gray-600 text-xl"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h3 class="font-semibold text-gray-800 text-lg">Dr. Emily Davis</h3>
+                                <p class="text-gray-600">Dermatology Consultation</p>
+                                <div class="flex items-center space-x-4 mt-2">
+                                    <span class="flex items-center text-sm text-gray-500">
+                                        <i class="fas fa-calendar mr-1"></i>
+                                        Dec 5, 2024
+                                    </span>
+                                    <span class="flex items-center text-sm text-gray-500">
+                                        <i class="fas fa-clock mr-1"></i>
+                                        11:00 AM
+                                    </span>
+                                    <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs">
+                                        Completed
+                                    </span>
+                                </div>
+                            </div>
+                            <button onclick="viewAppointmentDetails(3)" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                                <i class="fas fa-eye mr-1"></i>View Details
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Section -->
+        <div id="profile" class="section p-6">
+            <div class="max-w-4xl mx-auto">
+                <div class="bg-white rounded-xl shadow-md p-8">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">My Profile</h2>
+                    
+                    <!-- Profile Picture -->
+                    <div class="flex items-center space-x-6 mb-8">
+                        <div class="relative">
+                            <div class="w-24 h-24 bg-blue-500 rounded-full flex items-center justify-center">
+                                <span class="text-white font-bold text-2xl">JS</span>
+                            </div>
+                            <button class="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition-colors">
+                                <i class="fas fa-camera text-sm"></i>
+                            </button>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-semibold text-gray-800">John Smith</h3>
+                            <p class="text-gray-600">Patient ID: #12345</p>
+                            <p class="text-sm text-gray-500">Member since: January 2023</p>
+                        </div>
+                    </div>
+
+                    <form id="profileForm" onsubmit="updateProfile(event)">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Personal Information -->
+                            <div class="md:col-span-2">
+                                <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                    <i class="fas fa-user mr-2 text-blue-600"></i>
+                                    Personal Information
+                                </h3>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                                <input type="text" name="firstName" value="John" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                                <input type="text" name="lastName" value="Smith" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                                <input type="email" name="email" value="john.smith@email.com" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                                <input type="tel" name="phone" value="(555) 123-4567" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+                                <input type="date" name="dateOfBirth" value="1985-06-15" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+                                <select name="gender" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <option value="male" selected>Male</option>
+                                    <option value="female">Female</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                                <textarea name="address" rows="3" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">123 Main Street, Anytown, ST 12345</textarea>
+                            </div>
+
+                            <!-- Emergency Contact -->
+                            <div class="md:col-span-2 mt-6">
+                                <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                    <i class="fas fa-phone mr-2 text-red-600"></i>
+                                    Emergency Contact
+                                </h3>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Contact Name</label>
+                                <input type="text" name="emergencyName" value="Jane Smith" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Contact Phone</label>
+                                <input type="tel" name="emergencyPhone" value="(555) 987-6543" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Relationship</label>
+                                <select name="emergencyRelation" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <option value="spouse" selected>Spouse</option>
+                                    <option value="parent">Parent</option>
+                                    <option value="child">Child</option>
+                                    <option value="sibling">Sibling</option>
+                                    <option value="friend">Friend</option>
+                                </select>
+                            </div>
+
+                            <!-- Medical Information -->
+                            <div class="md:col-span-2 mt-6">
+                                <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                    <i class="fas fa-heartbeat mr-2 text-green-600"></i>
+                                    Medical Information
+                                </h3>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Blood Type</label>
+                                <select name="bloodType" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <option value="O+" selected>O+</option>
+                                    <option value="O-">O-</option>
+                                    <option value="A+">A+</option>
+                                    <option value="A-">A-</option>
+                                    <option value="B+">B+</option>
+                                    <option value="B-">B-</option>
+                                    <option value="AB+">AB+</option>
+                                    <option value="AB-">AB-</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Height</label>
+                                <input type="text" name="height" value="5'10\"" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Weight</label>
+                                <input type="text" name="weight" value="175 lbs" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Known Allergies</label>
+                                <textarea name="allergies" rows="2" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">Penicillin, Shellfish</textarea>
+                            </div>
+
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Current Medications</label>
+                                <textarea name="medications" rows="3" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">Lisinopril 10mg (once daily)
+Metformin 500mg (twice daily)</textarea>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end space-x-4 mt-8">
+                            <button type="button" class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                                Cancel
+                            </button>
+                            <button type="submit" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                                <i class="fas fa-save mr-2"></i>Save Changes
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports & History Section -->
+        <div id="reports" class="section p-6">
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800">Medical Reports & History</h2>
+                    <div class="flex space-x-3">
+                        <input type="text" placeholder="Search reports..." class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <select class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option>All Types</option>
+                            <option>Lab Results</option>
+                            <option>X-Rays</option>
+                            <option>Prescriptions</option>
+                            <option>Consultations</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-gray-200">
+                                <th class="text-left py-4 px-4 font-semibold text-gray-700">Date</th>
+                                <th class="text-left py-4 px-4 font-semibold text-gray-700">Type</th>
+                                <th class="text-left py-4 px-4 font-semibold text-gray-700">Doctor</th>
+                                <th class="text-left py-4 px-4 font-semibold text-gray-700">Description</th>
+                                <th class="text-left py-4 px-4 font-semibold text-gray-700">Status</th>
+                                <th class="text-left py-4 px-4 font-semibold text-gray-700">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b border-gray-100 hover:bg-gray-50">
+                                <td class="py-4 px-4">Dec 15, 2024</td>
+                                <td class="py-4 px-4">
+                                    <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm">Lab Results</span>
+                                </td>
+                                <td class="py-4 px-4">Dr. Sarah Johnson</td>
+                                <td class="py-4 px-4">Complete Blood Count (CBC)</td>
+                                <td class="py-4 px-4">
+                                    <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm">Available</span>
+                                </td>
+                                <td class="py-4 px-4">
+                                    <div class="flex space-x-2">
+                                        <button onclick="viewReport('blood-test-1')" class="text-blue-600 hover:text-blue-800">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button onclick="downloadReport('blood-test-1')" class="text-green-600 hover:text-green-800">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="border-b border-gray-100 hover:bg-gray-50">
+                                <td class="py-4 px-4">Dec 10, 2024</td>
+                                <td class="py-4 px-4">
+                                    <span class="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-sm">X-Ray</span>
+                                </td>
+                                <td class="py-4 px-4">Dr. Michael Chen</td>
+                                <td class="py-4 px-4">Chest X-Ray</td>
+                                <td class="py-4 px-4">
+                                    <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-sm">Processing</span>
+                                </td>
+                                <td class="py-4 px-4">
+                                    <div class="flex space-x-2">
+                                        <button class="text-gray-400 cursor-not-allowed">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="text-gray-400 cursor-not-allowed">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="border-b border-gray-100 hover:bg-gray-50">
+                                <td class="py-4 px-4">Dec 5, 2024</td>
+                                <td class="py-4 px-4">
+                                    <span class="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-sm">Prescription</span>
+                                </td>
+                                <td class="py-4 px-4">Dr. Emily Davis</td>
+                                <td class="py-4 px-4">Lisinopril 10mg</td>
+                                <td class="py-4 px-4">
+                                    <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm">Active</span>
+                                </td>
+                                <td class="py-4 px-4">
+                                    <div class="flex space-x-2">
+                                        <button onclick="viewReport('prescription-1')" class="text-blue-600 hover:text-blue-800">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button onclick="downloadReport('prescription-1')" class="text-green-600 hover:text-green-800">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="border-b border-gray-100 hover:bg-gray-50">
+                                <td class="py-4 px-4">Nov 28, 2024</td>
+                                <td class="py-4 px-4">
+                                    <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-sm">Consultation</span>
+                                </td>
+                                <td class="py-4 px-4">Dr. Sarah Johnson</td>
+                                <td class="py-4 px-4">Cardiology Follow-up</td>
+                                <td class="py-4 px-4">
+                                    <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm">Complete</span>
+                                </td>
+                                <td class="py-4 px-4">
+                                    <div class="flex space-x-2">
+                                        <button onclick="viewReport('consultation-1')" class="text-blue-600 hover:text-blue-800">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button onclick="downloadReport('consultation-1')" class="text-green-600 hover:text-green-800">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Prescriptions Section -->
+        <div id="prescriptions" class="section p-6">
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">My Prescriptions</h2>
+                
+                <!-- Active Prescriptions -->
+                <div class="mb-8">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Active Prescriptions</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div class="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <h4 class="font-semibold text-gray-800 text-lg">Lisinopril</h4>
+                                    <p class="text-gray-600">10mg</p>
+                                </div>
+                                <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Active</span>
+                            </div>
+                            <div class="space-y-2 text-sm text-gray-600">
+                                <p><strong>Dosage:</strong> Once daily</p>
+                                <p><strong>Prescribed by:</strong> Dr. Sarah Johnson</p>
+                                <p><strong>Start Date:</strong> Dec 5, 2024</p>
+                                <p><strong>Refills:</strong> 2 remaining</p>
+                            </div>
+                            <div class="mt-4 flex space-x-2">
+                                <button class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                                    <i class="fas fa-redo mr-1"></i>Request Refill
+                                </button>
+                                <button onclick="viewPrescriptionDetails('lisinopril')" class="bg-gray-200 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors text-sm">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <h4 class="font-semibold text-gray-800 text-lg">Metformin</h4>
+                                    <p class="text-gray-600">500mg</p>
+                                </div>
+                                <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Active</span>
+                            </div>
+                            <div class="space-y-2 text-sm text-gray-600">
+                                <p><strong>Dosage:</strong> Twice daily</p>
+                                <p><strong>Prescribed by:</strong> Dr. Michael Chen</p>
+                                <p><strong>Start Date:</strong> Nov 20, 2024</p>
+                                <p><strong>Refills:</strong> 1 remaining</p>
+                            </div>
+                            <div class="mt-4 flex space-x-2">
+                                <button class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                                    <i class="fas fa-redo mr-1"></i>Request Refill
+                                </button>
+                                <button onclick="viewPrescriptionDetails('metformin')" class="bg-gray-200 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors text-sm">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+                            <div class="flex justify-between items-start mb-4">
+                                <div>
+                                    <h4 class="font-semibold text-gray-800 text-lg">Vitamin D3</h4>
+                                    <p class="text-gray-600">1000 IU</p>
+                                </div>
+                                <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Active</span>
+                            </div>
+                            <div class="space-y-2 text-sm text-gray-600">
+                                <p><strong>Dosage:</strong> Once daily</p>
+                                <p><strong>Prescribed by:</strong> Dr. Emily Davis</p>
+                                <p><strong>Start Date:</strong> Oct 15, 2024</p>
+                                <p><strong>Refills:</strong> 3 remaining</p>
+                            </div>
+                            <div class="mt-4 flex space-x-2">
+                                <button class="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                                    <i class="fas fa-redo mr-1"></i>Request Refill
+                                </button>
+                                <button onclick="viewPrescriptionDetails('vitamin-d3')" class="bg-gray-200 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors text-sm">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Prescription History -->
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Prescription History</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b border-gray-200">
+                                    <th class="text-left py-3 px-4 font-semibold text-gray-700">Medication</th>
+                                    <th class="text-left py-3 px-4 font-semibold text-gray-700">Dosage</th>
+                                    <th class="text-left py-3 px-4 font-semibold text-gray-700">Doctor</th>
+                                    <th class="text-left py-3 px-4 font-semibold text-gray-700">Date</th>
+                                    <th class="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
+                                    <th class="text-left py-3 px-4 font-semibold text-gray-700">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b border-gray-100 hover:bg-gray-50">
+                                    <td class="py-3 px-4 font-medium">Amoxicillin</td>
+                                    <td class="py-3 px-4">500mg</td>
+                                    <td class="py-3 px-4">Dr. Sarah Johnson</td>
+                                    <td class="py-3 px-4">Sep 15, 2024</td>
+                                    <td class="py-3 px-4">
+                                        <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs">Completed</span>
+                                    </td>
+                                    <td class="py-3 px-4">
+                                        <button onclick="viewPrescriptionDetails('amoxicillin')" class="text-blue-600 hover:text-blue-800">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr class="border-b border-gray-100 hover:bg-gray-50">
+                                    <td class="py-3 px-4 font-medium">Ibuprofen</td>
+                                    <td class="py-3 px-4">400mg</td>
+                                    <td class="py-3 px-4">Dr. Michael Chen</td>
+                                    <td class="py-3 px-4">Aug 22, 2024</td>
+                                    <td class="py-3 px-4">
+                                        <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs">Completed</span>
+                                    </td>
+                                    <td class="py-3 px-4">
+                                        <button onclick="viewPrescriptionDetails('ibuprofen')" class="text-blue-600 hover:text-blue-800">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-6 max-w-2xl w-full mx-4 max-h-96 overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="modalTitle" class="text-xl font-bold text-gray-800"></h3>
+                <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="modalContent" class="text-gray-600"></div>
+            <div class="flex justify-end space-x-3 mt-6">
+                <button onclick="closeModal()" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">
+                    Close
+                </button>
+                <button id="modalAction" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                    Confirm
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCurrentDate();
+            setMinDate();
+        });
+
+        // Navigation
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Show selected section
+            document.getElementById(sectionId).classList.add('active');
+            
+            // Update sidebar
+            document.querySelectorAll('.sidebar-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Update page title
+            const titles = {
+                'dashboard': 'Dashboard',
+                'book-appointment': 'Book Appointment',
+                'my-appointments': 'My Appointments',
+                'profile': 'My Profile',
+                'reports': 'Reports & History',
+                'prescriptions': 'My Prescriptions'
+            };
+            document.getElementById('pageTitle').textContent = titles[sectionId];
+            
+            // Close mobile menu
+            document.getElementById('sidebar').classList.remove('open');
+        }
+
+        // Mobile menu toggle
+        document.getElementById('mobileMenuBtn').addEventListener('click', function() {
+            document.getElementById('sidebar').classList.toggle('open');
+        });
+
+        // Notifications
+        function toggleNotifications() {
+            const dropdown = document.getElementById('notificationDropdown');
+            dropdown.classList.toggle('hidden');
+        }
+
+        // Close notifications when clicking outside
+        document.addEventListener('click', function(event) {
+            const dropdown = document.getElementById('notificationDropdown');
+            const button = event.target.closest('[onclick="toggleNotifications()"]');
+            if (!button && !dropdown.contains(event.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        // Utility functions
+        function updateCurrentDate() {
+            const now = new Date();
+            const options = { month: 'short', day: 'numeric', year: 'numeric' };
+            document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', options);
+        }
+
+        function setMinDate() {
+            const today = new Date().toISOString().split('T')[0];
+            const dateInput = document.querySelector('input[name="date"]');
+            if (dateInput) {
+                dateInput.min = today;
+            }
+        }
+
+        // Modal functions
+        function showModal(title, content, actionText, actionCallback) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalContent').innerHTML = content;
+            document.getElementById('modalAction').textContent = actionText || 'Confirm';
+            document.getElementById('modalAction').onclick = actionCallback || closeModal;
+            document.getElementById('modal').classList.remove('hidden');
+            document.getElementById('modal').classList.add('flex');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.add('hidden');
+            document.getElementById('modal').classList.remove('flex');
+        }
+
+        // Appointment functions
+        function loadDoctors() {
+            const department = event.target.value;
+            const doctorSelect = document.querySelector('select[name="doctor"]');
+            
+            const doctors = {
+                'cardiology': ['Dr. Sarah Johnson', 'Dr. Robert Wilson'],
+                'dermatology': ['Dr. Emily Davis', 'Dr. Lisa Brown'],
+                'general': ['Dr. Michael Chen', 'Dr. David Miller'],
+                'neurology': ['Dr. Jennifer Taylor', 'Dr. Mark Anderson'],
+                'orthopedics': ['Dr. James White', 'Dr. Susan Garcia'],
+                'pediatrics': ['Dr. Maria Rodriguez', 'Dr. Thomas Lee']
+            };
+            
+            doctorSelect.innerHTML = '<option value="">Choose doctor</option>';
+            if (doctors[department]) {
+                doctors[department].forEach(doctor => {
+                    doctorSelect.innerHTML += `<option value="${doctor}">${doctor}</option>`;
+                });
+            }
+        }
+
+        function bookNewAppointment(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const appointmentData = Object.fromEntries(formData);
+            
+            showModal(
+                'Appointment Booking Confirmation',
+                `
+                <div class="space-y-3">
+                    <p><strong>Doctor:</strong> ${appointmentData.doctor}</p>
+                    <p><strong>Date:</strong> ${appointmentData.date}</p>
+                    <p><strong>Time:</strong> ${appointmentData.time}</p>
+                    <p><strong>Type:</strong> ${appointmentData.appointmentType}</p>
+                    <p><strong>Reason:</strong> ${appointmentData.reason}</p>
+                </div>
+                <p class="mt-4 text-sm text-gray-600">You will receive a confirmation email shortly.</p>
+                `,
+                'Confirm Booking',
+                () => {
+                    showNotification('Appointment booked successfully!', 'success');
+                    closeModal();
+                    showSection('my-appointments');
+                }
+            );
+        }
+
+        function filterAppointments(filter) {
+            // Update filter buttons
+            document.querySelectorAll('.appointment-filter').forEach(btn => {
+                btn.classList.remove('active', 'bg-blue-600', 'text-white');
+                btn.classList.add('text-gray-600');
+            });
+            event.target.classList.add('active', 'bg-blue-600', 'text-white');
+            event.target.classList.remove('text-gray-600');
+            
+            // Show/hide appointments
+            document.querySelectorAll('.appointment-item').forEach(item => {
+                if (filter === 'upcoming' && item.classList.contains('upcoming')) {
+                    item.classList.remove('hidden');
+                } else if (filter === 'past' && item.classList.contains('past')) {
+                    item.classList.remove('hidden');
+                } else if (filter === 'cancelled' && item.classList.contains('cancelled')) {
+                    item.classList.remove('hidden');
+                } else {
+                    item.classList.add('hidden');
+                }
+            });
+        }
+
+        function rescheduleAppointment(id) {
+            showModal(
+                'Reschedule Appointment',
+                `
+                <div class="space-y-4">
+                    <p>Select a new date and time for your appointment:</p>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">New Date</label>
+                        <input type="date" class="w-full p-2 border border-gray-300 rounded-lg" min="${new Date().toISOString().split('T')[0]}">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">New Time</label>
+                        <select class="w-full p-2 border border-gray-300 rounded-lg">
+                            <option>9:00 AM</option>
+                            <option>10:00 AM</option>
+                            <option>11:00 AM</option>
+                            <option>2:00 PM</option>
+                            <option>3:00 PM</option>
+                            <option>4:00 PM</option>
+                        </select>
+                    </div>
+                </div>
+                `,
+                'Reschedule',
+                () => {
+                    showNotification('Appointment rescheduled successfully!', 'success');
+                    closeModal();
+                }
+            );
+        }
+
+        function cancelAppointment(id) {
+            showModal(
+                'Cancel Appointment',
+                '<p>Are you sure you want to cancel this appointment? This action cannot be undone.</p>',
+                'Cancel Appointment',
+                () => {
+                    showNotification('Appointment cancelled successfully.', 'success');
+                    closeModal();
+                }
+            );
+        }
+
+        function viewAppointmentDetails(id) {
+            showModal(
+                'Appointment Details',
+                `
+                <div class="space-y-3">
+                    <p><strong>Doctor:</strong> Dr. Emily Davis</p>
+                    <p><strong>Specialization:</strong> Dermatology</p>
+                    <p><strong>Date:</strong> December 5, 2024</p>
+                    <p><strong>Time:</strong> 11:00 AM</p>
+                    <p><strong>Duration:</strong> 30 minutes</p>
+                    <p><strong>Type:</strong> Consultation</p>
+                    <p><strong>Status:</strong> Completed</p>
+                    <p><strong>Notes:</strong> Routine skin examination completed. No issues found.</p>
+                </div>
+                `,
+                'Close'
+            );
+        }
+
+        // Profile functions
+        function updateProfile(event) {
+            event.preventDefault();
+            showNotification('Profile updated successfully!', 'success');
+        }
+
+        // Report functions
+        function viewReport(reportId) {
+            const reports = {
+                'blood-test-1': {
+                    title: 'Complete Blood Count (CBC)',
+                    content: `
+                        <div class="space-y-4">
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h4 class="font-semibold mb-3">Test Results</h4>
+                                <div class="grid grid-cols-2 gap-4 text-sm">
+                                    <div class="flex justify-between">
+                                        <span>Hemoglobin:</span>
+                                        <span class="font-medium">14.2 g/dL</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Hematocrit:</span>
+                                        <span class="font-medium">42.1%</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>White Blood Cells:</span>
+                                        <span class="font-medium">7,200/μL</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Platelets:</span>
+                                        <span class="font-medium">250,000/μL</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-green-50 p-4 rounded-lg">
+                                <h4 class="font-semibold text-green-800 mb-2">Doctor's Notes</h4>
+                                <p class="text-sm text-green-700">All values are within normal range. Continue current medication regimen.</p>
+                            </div>
+                        </div>
+                    `
+                },
+                'prescription-1': {
+                    title: 'Prescription Details',
+                    content: `
+                        <div class="space-y-4">
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h4 class="font-semibold mb-3">Medication Information</h4>
+                                <div class="space-y-2 text-sm">
+                                    <p><strong>Medication:</strong> Lisinopril</p>
+                                    <p><strong>Strength:</strong> 10mg</p>
+                                    <p><strong>Dosage:</strong> Take one tablet once daily</p>
+                                    <p><strong>Duration:</strong> 90 days</p>
+                                    <p><strong>Refills:</strong> 2 remaining</p>
+                                </div>
+                            </div>
+                            <div class="bg-blue-50 p-4 rounded-lg">
+                                <h4 class="font-semibold text-blue-800 mb-2">Instructions</h4>
+                                <p class="text-sm text-blue-700">Take with or without food. Take at the same time each day. Do not stop taking without consulting your doctor.</p>
+                            </div>
+                        </div>
+                    `
+                }
+            };
+            
+            const report = reports[reportId] || { title: 'Report', content: '<p>Report details not available.</p>' };
+            showModal(report.title, report.content, 'Close');
+        }
+
+        function downloadReport(reportId) {
+            showNotification('Report download started...', 'success');
+        }
+
+        // Prescription functions
+        function viewPrescriptionDetails(medicationId) {
+            const prescriptions = {
+                'lisinopril': {
+                    title: 'Lisinopril 10mg',
+                    content: `
+                        <div class="space-y-4">
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h4 class="font-semibold mb-3">Prescription Details</h4>
+                                <div class="space-y-2 text-sm">
+                                    <p><strong>Generic Name:</strong> Lisinopril</p>
+                                    <p><strong>Brand Name:</strong> Prinivil, Zestril</p>
+                                    <p><strong>Strength:</strong> 10mg</p>
+                                    <p><strong>Form:</strong> Tablet</p>
+                                    <p><strong>Prescribed by:</strong> Dr. Sarah Johnson</p>
+                                    <p><strong>Date Prescribed:</strong> December 5, 2024</p>
+                                </div>
+                            </div>
+                            <div class="bg-blue-50 p-4 rounded-lg">
+                                <h4 class="font-semibold text-blue-800 mb-2">Dosage Instructions</h4>
+                                <p class="text-sm text-blue-700">Take one tablet by mouth once daily. May be taken with or without food. Take at the same time each day for best results.</p>
+                            </div>
+                            <div class="bg-yellow-50 p-4 rounded-lg">
+                                <h4 class="font-semibold text-yellow-800 mb-2">Important Notes</h4>
+                                <p class="text-sm text-yellow-700">Do not stop taking this medication without consulting your doctor. Monitor blood pressure regularly.</p>
+                            </div>
+                        </div>
+                    `
+                }
+            };
+            
+            const prescription = prescriptions[medicationId] || { title: 'Prescription', content: '<p>Prescription details not available.</p>' };
+            showModal(prescription.title, prescription.content, 'Close');
+        }
+
+        // Contact doctor
+        function contactDoctor() {
+            showModal(
+                'Message Doctor',
+                `
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Select Doctor</label>
+                        <select class="w-full p-2 border border-gray-300 rounded-lg">
+                            <option>Dr. Sarah Johnson - Cardiology</option>
+                            <option>Dr. Michael Chen - General Medicine</option>
+                            <option>Dr. Emily Davis - Dermatology</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+                        <input type="text" class="w-full p-2 border border-gray-300 rounded-lg" placeholder="Enter subject">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Message</label>
+                        <textarea class="w-full p-2 border border-gray-300 rounded-lg h-24" placeholder="Type your message here..."></textarea>
+                    </div>
+                </div>
+                `,
+                'Send Message',
+                () => {
+                    showNotification('Message sent successfully!', 'success');
+                    closeModal();
+                }
+            );
+        }
+
+        // Logout
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('userRole');
+                localStorage.removeItem('userEmail');
+                localStorage.removeItem('isLoggedIn');
+                window.location.href = 'login.html';
+            }
+        }
+
+        // Notification system
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
+                type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+            }`;
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} mr-2"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // Initialize filter buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            const firstFilter = document.querySelector('.appointment-filter');
+            if (firstFilter) {
+                firstFilter.classList.add('bg-blue-600', 'text-white');
+                firstFilter.classList.remove('text-gray-600');
+            }
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97bf4cbcf2c13b34',t:'MTc1NzM0MzQ2Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>

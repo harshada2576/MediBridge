@@ -1,0 +1,2557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediCare Hospital System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .medical-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .sidebar-item {
+            transition: all 0.3s ease;
+        }
+        .sidebar-item:hover {
+            background-color: #f3f4f6;
+            transform: translateX(4px);
+        }
+        .sidebar-item.active {
+            background-color: #dbeafe;
+            border-right: 4px solid #3b82f6;
+            color: #1d4ed8;
+        }
+        .page {
+            display: none;
+        }
+        .page.active {
+            display: block;
+        }
+        .section {
+            display: none;
+        }
+        .section.active {
+            display: block;
+        }
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+        }
+        .patient-card {
+            transition: all 0.3s ease;
+        }
+        .patient-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .appointment-slot {
+            transition: all 0.2s ease;
+        }
+        .appointment-slot:hover {
+            background-color: #f8fafc;
+        }
+        .urgent {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .hero-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .login-card {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.95);
+            animation: slideInUp 0.6s ease-out;
+        }
+        .role-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+            animation: fadeInUp 0.6s ease-out;
+        }
+        .role-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        }
+        .page-transition {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        .slide-in-right {
+            animation: slideInRight 0.4s ease-out;
+        }
+        .bounce-in {
+            animation: bounceIn 0.6s ease-out;
+        }
+        .pulse-slow {
+            animation: pulse 3s infinite;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes fadeInUp {
+            from { 
+                opacity: 0; 
+                transform: translateY(30px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0); 
+            }
+        }
+        @keyframes slideInUp {
+            from { 
+                opacity: 0; 
+                transform: translateY(50px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0); 
+            }
+        }
+        @keyframes slideInRight {
+            from { 
+                opacity: 0; 
+                transform: translateX(30px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateX(0); 
+            }
+        }
+        @keyframes bounceIn {
+            0% { 
+                opacity: 0; 
+                transform: scale(0.3); 
+            }
+            50% { 
+                opacity: 1; 
+                transform: scale(1.05); 
+            }
+            70% { 
+                transform: scale(0.9); 
+            }
+            100% { 
+                opacity: 1; 
+                transform: scale(1); 
+            }
+        }
+        
+        /* Dark mode styles */
+        .dark .login-card {
+            background: rgba(31, 41, 55, 0.95);
+            color: white;
+        }
+        .dark .hero-section {
+            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 min-h-screen transition-colors duration-300">
+    <!-- Dark Mode Toggle (Fixed Position) -->
+    <div class="fixed top-4 right-4 z-50">
+        <button onclick="toggleDarkMode()" class="bg-white dark:bg-gray-800 p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-gray-700">
+            <i id="darkModeIcon" class="fas fa-moon text-gray-600 dark:text-yellow-400"></i>
+        </button>
+    </div>
+
+    <!-- Logo/Branding -->
+    <div class="fixed top-4 left-4 z-40 flex items-center space-x-2 bg-white dark:bg-gray-800 px-4 py-2 rounded-full shadow-lg border border-gray-200 dark:border-gray-700">
+        <div class="medical-gradient w-8 h-8 rounded-full flex items-center justify-center">
+            <i class="fas fa-heartbeat text-white text-sm"></i>
+        </div>
+        <span class="font-bold text-gray-800 dark:text-white text-sm">MediCare</span>
+    </div>
+    <!-- Registration Page -->
+    <div id="registerPage" class="page">
+        <div class="hero-section flex items-center justify-center p-6">
+            <div class="login-card rounded-2xl p-8 max-w-md w-full shadow-2xl">
+                <div class="text-center mb-8">
+                    <div class="medical-gradient w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-user-plus text-white text-2xl"></i>
+                    </div>
+                    <h1 class="text-3xl font-bold text-gray-800 mb-2">Create Account</h1>
+                    <p class="text-gray-600">Join MediCare Hospital System</p>
+                </div>
+
+                <form id="registerForm" onsubmit="handleRegistration(event)" class="space-y-6">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">First Name</label>
+                            <input type="text" id="firstName" required class="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors" placeholder="John">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Last Name</label>
+                            <input type="text" id="lastName" required class="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors" placeholder="Smith">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                        <input type="email" id="registerEmail" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="john.smith@email.com">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                        <input type="tel" id="phoneNumber" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="(555) 123-4567">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Date of Birth</label>
+                        <input type="date" id="dateOfBirth" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Register As</label>
+                        <select id="registerRole" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">Select your role</option>
+                            <option value="patient">Patient</option>
+                            <option value="doctor">Doctor (Requires Verification)</option>
+                            <option value="nurse">Nurse (Requires Verification)</option>
+                        </select>
+                    </div>
+                    <div id="medicalLicense" class="hidden">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Medical License Number</label>
+                        <input type="text" id="licenseNumber" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Enter license number">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Password</label>
+                        <div class="relative">
+                            <input type="password" id="registerPassword" required class="w-full p-3 pr-12 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Create a strong password">
+                            <button type="button" onclick="togglePasswordVisibility('registerPassword')" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                                <i class="fas fa-eye" id="registerPassword-icon"></i>
+                            </button>
+                        </div>
+                        <div id="passwordStrength" class="mt-2 text-sm"></div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Confirm Password</label>
+                        <div class="relative">
+                            <input type="password" id="confirmPassword" required class="w-full p-3 pr-12 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Confirm your password">
+                            <button type="button" onclick="togglePasswordVisibility('confirmPassword')" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                                <i class="fas fa-eye" id="confirmPassword-icon"></i>
+                            </button>
+                        </div>
+                        <div id="passwordMatch" class="mt-2 text-sm"></div>
+                    </div>
+                    <div class="flex items-start">
+                        <input type="checkbox" id="agreeTerms" required class="mt-1 mr-3">
+                        <label for="agreeTerms" class="text-sm text-gray-600">
+                            I agree to the <a href="#" class="text-blue-600 hover:text-blue-800">Terms of Service</a> and <a href="#" class="text-blue-600 hover:text-blue-800">Privacy Policy</a>
+                        </label>
+                    </div>
+                    <button type="submit" class="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium">
+                        <i class="fas fa-user-plus mr-2"></i>
+                        Create Account
+                    </button>
+                </form>
+
+                <div class="mt-6 text-center">
+                    <p class="text-sm text-gray-600">Already have an account?</p>
+                    <button onclick="showPage('loginPage')" class="text-blue-600 hover:text-blue-800 text-sm font-medium mt-2">
+                        Sign In Here
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Page -->
+    <div id="loginPage" class="page active">
+        <div class="hero-section flex items-center justify-center p-6">
+            <div class="login-card rounded-2xl p-8 max-w-md w-full shadow-2xl">
+                <div class="text-center mb-8">
+                    <div class="medical-gradient w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-hospital text-white text-2xl"></i>
+                    </div>
+                    <h1 class="text-3xl font-bold text-gray-800 mb-2">MediCare Hospital</h1>
+                    <p class="text-gray-600">Healthcare Management System</p>
+                </div>
+
+                <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                        <input type="email" id="loginEmail" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Enter your email">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                        <input type="password" id="loginPassword" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="Enter your password">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Login As</label>
+                        <select id="userRole" required class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">Select your role</option>
+                            <option value="doctor">Doctor</option>
+                            <option value="patient">Patient</option>
+                            <option value="admin">Administrator</option>
+                            <option value="nurse">Nurse</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="w-full medical-gradient text-white py-3 px-4 rounded-lg hover:opacity-90 transition-opacity font-medium">
+                        <i class="fas fa-sign-in-alt mr-2"></i>
+                        Sign In
+                    </button>
+                </form>
+
+                <div class="mt-6 text-center">
+                    <p class="text-sm text-gray-600">Demo Credentials:</p>
+                    <div class="text-xs text-gray-500 mt-2 space-y-1">
+                        <p>Doctor: doctor@medicare.com / password123</p>
+                        <p>Patient: patient@medicare.com / password123</p>
+                        <p>Admin: admin@medicare.com / password123</p>
+                    </div>
+                </div>
+
+                <div class="mt-6 text-center">
+                    <p class="text-sm text-gray-600 mb-4">Don't have an account?</p>
+                    <button onclick="showRegisterForm()" class="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-colors font-medium mb-4">
+                        <i class="fas fa-user-plus mr-2"></i>
+                        Create New Account
+                    </button>
+                    <a href="#" onclick="showForgotPassword()" class="text-blue-600 hover:text-blue-800 text-sm">Forgot Password?</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Role Selection Page -->
+    <div id="roleSelectionPage" class="page">
+        <div class="hero-section flex items-center justify-center p-6">
+            <div class="max-w-4xl w-full">
+                <div class="text-center mb-12">
+                    <div class="medical-gradient w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-hospital text-white text-3xl"></i>
+                    </div>
+                    <h1 class="text-4xl font-bold text-white mb-4">Welcome to MediCare</h1>
+                    <p class="text-purple-100 text-xl">Choose your portal to continue</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="role-card bg-white rounded-2xl p-8 text-center shadow-xl" onclick="loginAs('doctor')">
+                        <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-user-md text-blue-600 text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">Doctor Portal</h3>
+                        <p class="text-gray-600 text-sm mb-4">Manage patients, appointments, and medical records</p>
+                        <div class="bg-blue-50 rounded-lg p-3 text-xs text-blue-700">
+                            <p>• Patient Management</p>
+                            <p>• Appointment Scheduling</p>
+                            <p>• Medical Records</p>
+                        </div>
+                    </div>
+
+                    <div class="role-card bg-white rounded-2xl p-8 text-center shadow-xl" onclick="loginAs('patient')">
+                        <div class="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-user text-green-600 text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">Patient Portal</h3>
+                        <p class="text-gray-600 text-sm mb-4">Book appointments, view records, and communicate</p>
+                        <div class="bg-green-50 rounded-lg p-3 text-xs text-green-700">
+                            <p>• Book Appointments</p>
+                            <p>• View Test Results</p>
+                            <p>• Message Doctors</p>
+                        </div>
+                    </div>
+
+                    <div class="role-card bg-white rounded-2xl p-8 text-center shadow-xl" onclick="loginAs('admin')">
+                        <div class="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-cog text-purple-600 text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">Admin Portal</h3>
+                        <p class="text-gray-600 text-sm mb-4">System management and hospital operations</p>
+                        <div class="bg-purple-50 rounded-lg p-3 text-xs text-purple-700">
+                            <p>• User Management</p>
+                            <p>• System Settings</p>
+                            <p>• Reports & Analytics</p>
+                        </div>
+                    </div>
+
+                    <div class="role-card bg-white rounded-2xl p-8 text-center shadow-xl" onclick="loginAs('nurse')">
+                        <div class="bg-pink-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-user-nurse text-pink-600 text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800 mb-2">Nurse Portal</h3>
+                        <p class="text-gray-600 text-sm mb-4">Patient care, vitals, and ward management</p>
+                        <div class="bg-pink-50 rounded-lg p-3 text-xs text-pink-700">
+                            <p>• Patient Care</p>
+                            <p>• Vital Signs</p>
+                            <p>• Ward Management</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-8">
+                    <button onclick="showPage('loginPage')" class="text-white hover:text-purple-200 transition-colors">
+                        <i class="fas fa-arrow-left mr-2"></i>
+                        Back to Login
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Doctor Portal -->
+    <div id="doctorPortal" class="page">
+        <!-- Mobile Menu Button -->
+        <button id="mobileMenuBtn" class="md:hidden fixed top-4 left-4 z-50 bg-white p-2 rounded-lg shadow-lg">
+            <i class="fas fa-bars text-gray-600"></i>
+        </button>
+
+        <!-- Sidebar -->
+        <div id="sidebar" class="sidebar fixed left-0 top-0 h-full w-64 bg-white shadow-xl z-40">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center">
+                    <div class="medical-gradient w-10 h-10 rounded-lg flex items-center justify-center mr-3">
+                        <i class="fas fa-user-md text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-bold text-gray-800">MediCare</h2>
+                        <p class="text-sm text-gray-600">Doctor Portal</p>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="mt-6">
+                <a href="#" onclick="showSection('dashboard')" class="sidebar-item active flex items-center px-6 py-3 text-gray-700">
+                    <i class="fas fa-home mr-3"></i>
+                    Dashboard
+                </a>
+                <a href="#" onclick="showSection('appointments')" class="sidebar-item flex items-center px-6 py-3 text-gray-700">
+                    <i class="fas fa-calendar-alt mr-3"></i>
+                    Appointments
+                </a>
+                <a href="#" onclick="showSection('patients')" class="sidebar-item flex items-center px-6 py-3 text-gray-700">
+                    <i class="fas fa-users mr-3"></i>
+                    My Patients
+                </a>
+                <a href="#" onclick="showSection('consultations')" class="sidebar-item flex items-center px-6 py-3 text-gray-700">
+                    <i class="fas fa-stethoscope mr-3"></i>
+                    Consultations
+                </a>
+                <a href="#" onclick="showSection('prescriptions')" class="sidebar-item flex items-center px-6 py-3 text-gray-700">
+                    <i class="fas fa-prescription-bottle mr-3"></i>
+                    Prescriptions
+                </a>
+                <a href="#" onclick="showSection('reports')" class="sidebar-item flex items-center px-6 py-3 text-gray-700">
+                    <i class="fas fa-file-medical-alt mr-3"></i>
+                    Reports
+                </a>
+                <a href="#" onclick="showSection('schedule')" class="sidebar-item flex items-center px-6 py-3 text-gray-700">
+                    <i class="fas fa-clock mr-3"></i>
+                    Schedule
+                </a>
+            </nav>
+
+            <div class="absolute bottom-0 w-full p-6 border-t border-gray-200">
+                <div class="flex items-center mb-4">
+                    <div class="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center mr-3">
+                        <span class="text-white font-semibold text-sm">SJ</span>
+                    </div>
+                    <div>
+                        <p class="font-medium text-gray-800">Dr. Sarah Johnson</p>
+                        <p class="text-sm text-gray-600">Cardiologist</p>
+                    </div>
+                </div>
+                <button onclick="logout()" class="w-full bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition-colors">
+                    <i class="fas fa-sign-out-alt mr-2"></i>
+                    Logout
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="md:ml-64 min-h-screen">
+            <!-- Top Navigation Bar -->
+            <nav class="bg-white shadow-sm border-b border-gray-200 px-6 py-3">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center space-x-4">
+                        <button id="mobileMenuBtn" class="md:hidden p-2 text-gray-600 hover:text-gray-800">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                        <div class="hidden md:block">
+                            <input type="text" placeholder="Search patients, appointments..." class="w-80 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        <!-- Quick Actions -->
+                        <button onclick="quickAddPatient()" class="hidden md:flex items-center px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                            <i class="fas fa-plus mr-2"></i>
+                            Add Patient
+                        </button>
+                        
+                        <!-- Notifications -->
+                        <div class="relative">
+                            <button onclick="toggleNotifications()" class="relative p-2 text-gray-600 hover:text-blue-600 transition-colors" title="Notifications">
+                                <i class="fas fa-bell text-lg"></i>
+                                <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">3</span>
+                            </button>
+                        </div>
+                        
+                        <!-- Messages -->
+                        <div class="relative">
+                            <button onclick="toggleMessages()" class="relative p-2 text-gray-600 hover:text-green-600 transition-colors" title="Messages">
+                                <i class="fas fa-envelope text-lg"></i>
+                                <span class="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">5</span>
+                            </button>
+                        </div>
+                        
+                        <!-- Settings -->
+                        <button onclick="openSettings()" class="p-2 text-gray-600 hover:text-purple-600 transition-colors" title="Settings">
+                            <i class="fas fa-cog text-lg"></i>
+                        </button>
+                        
+                        <!-- Profile Dropdown -->
+                        <div class="relative">
+                            <button onclick="toggleProfileMenu()" class="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-colors">
+                                <div class="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
+                                    <span class="text-white font-semibold text-sm">SJ</span>
+                                </div>
+                                <div class="hidden md:block text-left">
+                                    <p class="text-sm font-medium text-gray-800">Dr. Sarah Johnson</p>
+                                    <p class="text-xs text-gray-600">Cardiologist</p>
+                                </div>
+                                <i class="fas fa-chevron-down text-gray-400 text-xs"></i>
+                            </button>
+                            
+                            <!-- Profile Dropdown Menu -->
+                            <div id="profileDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
+                                <div class="py-2">
+                                    <a href="#" onclick="viewProfile()" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                        <i class="fas fa-user mr-3"></i>
+                                        View Profile
+                                    </a>
+                                    <a href="#" onclick="editProfile()" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                        <i class="fas fa-edit mr-3"></i>
+                                        Edit Profile
+                                    </a>
+                                    <a href="#" onclick="changePassword()" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                        <i class="fas fa-key mr-3"></i>
+                                        Change Password
+                                    </a>
+                                    <hr class="my-2">
+                                    <a href="#" onclick="openSettings()" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                        <i class="fas fa-cog mr-3"></i>
+                                        Settings
+                                    </a>
+                                    <a href="#" onclick="getHelp()" class="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                        <i class="fas fa-question-circle mr-3"></i>
+                                        Help & Support
+                                    </a>
+                                    <hr class="my-2">
+                                    <a href="#" onclick="logout()" class="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                                        <i class="fas fa-sign-out-alt mr-3"></i>
+                                        Logout
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+            
+            <!-- Header -->
+            <header class="bg-white px-6 py-4">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 id="pageTitle" class="text-2xl font-bold text-gray-800 dark:text-white">Dashboard</h1>
+                        <p class="text-gray-600 dark:text-gray-300">Good morning, Dr. Johnson!</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm text-gray-600 dark:text-gray-300">Today</p>
+                        <p class="text-sm font-medium text-gray-800 dark:text-white" id="currentDate"></p>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Section -->
+            <div id="dashboard" class="section active p-6">
+                <!-- Welcome Card -->
+                <div class="medical-gradient rounded-2xl p-8 text-white mb-8">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
+                        <div>
+                            <h2 class="text-3xl font-bold mb-2">Welcome back, Dr. Johnson!</h2>
+                            <p class="text-purple-100 text-lg">You have 8 appointments scheduled for today</p>
+                        </div>
+                        <div class="mt-4 md:mt-0 text-right">
+                            <p class="text-purple-100">Next Patient</p>
+                            <p class="text-xl font-semibold">10:00 AM</p>
+                            <p class="text-purple-100">John Smith - Follow-up</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white rounded-xl p-6 shadow-md card-hover">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-600 text-sm">Today's Appointments</p>
+                                <p class="text-3xl font-bold text-blue-600">8</p>
+                            </div>
+                            <div class="bg-blue-100 p-3 rounded-lg">
+                                <i class="fas fa-calendar-day text-blue-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl p-6 shadow-md card-hover">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-600 text-sm">Active Patients</p>
+                                <p class="text-3xl font-bold text-green-600">142</p>
+                            </div>
+                            <div class="bg-green-100 p-3 rounded-lg">
+                                <i class="fas fa-users text-green-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl p-6 shadow-md card-hover">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-600 text-sm">Pending Reports</p>
+                                <p class="text-3xl font-bold text-orange-600">6</p>
+                            </div>
+                            <div class="bg-orange-100 p-3 rounded-lg">
+                                <i class="fas fa-file-medical text-orange-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl p-6 shadow-md card-hover">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-600 text-sm">Urgent Cases</p>
+                                <p class="text-3xl font-bold text-red-600">2</p>
+                            </div>
+                            <div class="bg-red-100 p-3 rounded-lg">
+                                <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                    <div class="bg-white rounded-xl shadow-md p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">Appointments This Week</h3>
+                        <canvas id="appointmentsChart" width="400" height="200"></canvas>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-md p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">Patient Demographics</h3>
+                        <canvas id="demographicsChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+
+                <!-- Today's Schedule & Recent Activity -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="bg-white rounded-xl shadow-md p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">Today's Schedule</h3>
+                        <div class="space-y-4">
+                            <div class="appointment-slot flex items-center space-x-4 p-3 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+                                <div class="text-center">
+                                    <p class="text-sm font-medium text-blue-600">10:00</p>
+                                    <p class="text-xs text-blue-500">AM</p>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="font-medium text-gray-800">John Smith</p>
+                                    <p class="text-sm text-gray-600">Cardiology Follow-up</p>
+                                    <p class="text-xs text-gray-500">Room 201</p>
+                                </div>
+                                <button onclick="startConsultation('john-smith')" class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">
+                                    Start
+                                </button>
+                            </div>
+                            <div class="appointment-slot flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
+                                <div class="text-center">
+                                    <p class="text-sm font-medium text-gray-600">11:00</p>
+                                    <p class="text-xs text-gray-500">AM</p>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="font-medium text-gray-800">Maria Rodriguez</p>
+                                    <p class="text-sm text-gray-600">Initial Consultation</p>
+                                    <p class="text-xs text-gray-500">Room 201</p>
+                                </div>
+                                <span class="text-gray-400 text-sm">Waiting</span>
+                            </div>
+                            <div class="appointment-slot flex items-center space-x-4 p-3 bg-red-50 rounded-lg border-l-4 border-red-500">
+                                <div class="text-center">
+                                    <p class="text-sm font-medium text-red-600">2:00</p>
+                                    <p class="text-xs text-red-500">PM</p>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="font-medium text-gray-800">Robert Wilson</p>
+                                    <p class="text-sm text-gray-600">Urgent - Chest Pain</p>
+                                    <p class="text-xs text-gray-500">Room 205</p>
+                                </div>
+                                <span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs">Urgent</span>
+                            </div>
+                        </div>
+                        <button onclick="showSection('appointments')" class="w-full mt-4 text-blue-600 hover:text-blue-800 text-sm font-medium">
+                            View Full Schedule →
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-md p-6">
+                        <h3 class="text-xl font-bold text-gray-800 mb-4">Recent Activity</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
+                                <div class="bg-green-100 p-2 rounded-full">
+                                    <i class="fas fa-check-circle text-green-600"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="font-medium text-gray-800">Consultation completed</p>
+                                    <p class="text-sm text-gray-600">Emily Davis - Routine checkup</p>
+                                    <p class="text-xs text-gray-500">30 minutes ago</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
+                                <div class="bg-blue-100 p-2 rounded-full">
+                                    <i class="fas fa-prescription-bottle text-blue-600"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="font-medium text-gray-800">Prescription issued</p>
+                                    <p class="text-sm text-gray-600">Michael Chen - Lisinopril 10mg</p>
+                                    <p class="text-xs text-gray-500">1 hour ago</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
+                                <div class="bg-orange-100 p-2 rounded-full">
+                                    <i class="fas fa-file-medical text-orange-600"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="font-medium text-gray-800">Lab results reviewed</p>
+                                    <p class="text-sm text-gray-600">Lisa Brown - Blood work normal</p>
+                                    <p class="text-xs text-gray-500">2 hours ago</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Other sections would go here (appointments, patients, etc.) -->
+            <!-- For brevity, I'm including just the dashboard section -->
+            <!-- The other sections from the previous code would be included here -->
+        </div>
+    </div>
+
+    <!-- Patient Portal -->
+    <div id="patientPortal" class="page">
+        <div class="min-h-screen bg-gray-50">
+            <!-- Header -->
+            <header class="bg-white shadow-sm">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="flex justify-between items-center py-6">
+                        <div class="flex items-center">
+                            <div class="medical-gradient w-10 h-10 rounded-lg flex items-center justify-center mr-3">
+                                <i class="fas fa-user text-white"></i>
+                            </div>
+                            <div>
+                                <h1 class="text-2xl font-bold text-gray-900">Patient Portal</h1>
+                                <p class="text-sm text-gray-600">Welcome back, John Smith</p>
+                            </div>
+                        </div>
+                        <button onclick="logout()" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors">
+                            <i class="fas fa-sign-out-alt mr-2"></i>
+                            Logout
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Content -->
+            <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+                <div class="px-4 py-6 sm:px-0">
+                    <!-- Welcome Section -->
+                    <div class="medical-gradient rounded-lg p-6 text-white mb-8">
+                        <h2 class="text-2xl font-bold mb-2">Welcome back, John!</h2>
+                        <p class="text-purple-100">Your next appointment is on December 20, 2024 at 10:00 AM</p>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <div class="bg-white rounded-lg p-6 shadow-md card-hover cursor-pointer" onclick="bookAppointment()">
+                            <div class="text-center">
+                                <div class="bg-blue-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+                                    <i class="fas fa-calendar-plus text-blue-600"></i>
+                                </div>
+                                <h3 class="font-semibold text-gray-800">Book Appointment</h3>
+                                <p class="text-sm text-gray-600 mt-1">Schedule a new visit</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-lg p-6 shadow-md card-hover cursor-pointer" onclick="viewTestResults()">
+                            <div class="text-center">
+                                <div class="bg-green-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+                                    <i class="fas fa-file-medical text-green-600"></i>
+                                </div>
+                                <h3 class="font-semibold text-gray-800">Test Results</h3>
+                                <p class="text-sm text-gray-600 mt-1">View lab reports</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-lg p-6 shadow-md card-hover cursor-pointer" onclick="viewPrescriptions()">
+                            <div class="text-center">
+                                <div class="bg-purple-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+                                    <i class="fas fa-pills text-purple-600"></i>
+                                </div>
+                                <h3 class="font-semibold text-gray-800">Prescriptions</h3>
+                                <p class="text-sm text-gray-600 mt-1">Current medications</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-lg p-6 shadow-md card-hover cursor-pointer" onclick="messageDoctor()">
+                            <div class="text-center">
+                                <div class="bg-orange-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
+                                    <i class="fas fa-comments text-orange-600"></i>
+                                </div>
+                                <h3 class="font-semibold text-gray-800">Message Doctor</h3>
+                                <p class="text-sm text-gray-600 mt-1">Send a message</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Health Overview Charts -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                        <div class="bg-white rounded-lg shadow-md p-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Health Trends</h3>
+                            <canvas id="patientHealthChart" width="400" height="200"></canvas>
+                        </div>
+                        <div class="bg-white rounded-lg shadow-md p-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Appointment History</h3>
+                            <canvas id="patientAppointmentsChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div class="bg-white rounded-lg shadow-md p-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Upcoming Appointments</h3>
+                            <div class="space-y-4">
+                                <div class="border-l-4 border-blue-500 pl-4 py-2">
+                                    <p class="font-medium text-gray-800">Dr. Sarah Johnson</p>
+                                    <p class="text-sm text-gray-600">Cardiology Follow-up</p>
+                                    <p class="text-xs text-gray-500">Dec 20, 2024 at 10:00 AM</p>
+                                </div>
+                                <div class="border-l-4 border-green-500 pl-4 py-2">
+                                    <p class="font-medium text-gray-800">Dr. Michael Chen</p>
+                                    <p class="text-sm text-gray-600">Annual Physical</p>
+                                    <p class="text-xs text-gray-500">Jan 15, 2025 at 2:00 PM</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-lg shadow-md p-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Recent Test Results</h3>
+                            <div class="space-y-4">
+                                <div class="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                                    <div>
+                                        <p class="font-medium text-gray-800">Blood Work</p>
+                                        <p class="text-sm text-gray-600">Dec 15, 2024</p>
+                                    </div>
+                                    <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Normal</span>
+                                </div>
+                                <div class="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+                                    <div>
+                                        <p class="font-medium text-gray-800">ECG</p>
+                                        <p class="text-sm text-gray-600">Dec 10, 2024</p>
+                                    </div>
+                                    <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">Normal</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Admin Portal -->
+    <div id="adminPortal" class="page">
+        <div class="min-h-screen bg-gray-50">
+            <!-- Header -->
+            <header class="bg-white shadow-sm">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="flex justify-between items-center py-6">
+                        <div class="flex items-center">
+                            <div class="medical-gradient w-10 h-10 rounded-lg flex items-center justify-center mr-3">
+                                <i class="fas fa-cog text-white"></i>
+                            </div>
+                            <div>
+                                <h1 class="text-2xl font-bold text-gray-900">Admin Portal</h1>
+                                <p class="text-sm text-gray-600">System Administration</p>
+                            </div>
+                        </div>
+                        <button onclick="logout()" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors">
+                            <i class="fas fa-sign-out-alt mr-2"></i>
+                            Logout
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Content -->
+            <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+                <div class="px-4 py-6 sm:px-0">
+                    <!-- System Overview -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <div class="bg-white rounded-lg p-6 shadow-md">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-600 text-sm">Total Users</p>
+                                    <p class="text-3xl font-bold text-blue-600">1,247</p>
+                                </div>
+                                <div class="bg-blue-100 p-3 rounded-lg">
+                                    <i class="fas fa-users text-blue-600 text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-lg p-6 shadow-md">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-600 text-sm">Active Doctors</p>
+                                    <p class="text-3xl font-bold text-green-600">45</p>
+                                </div>
+                                <div class="bg-green-100 p-3 rounded-lg">
+                                    <i class="fas fa-user-md text-green-600 text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-lg p-6 shadow-md">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-600 text-sm">Today's Appointments</p>
+                                    <p class="text-3xl font-bold text-purple-600">156</p>
+                                </div>
+                                <div class="bg-purple-100 p-3 rounded-lg">
+                                    <i class="fas fa-calendar text-purple-600 text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-lg p-6 shadow-md">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-600 text-sm">System Health</p>
+                                    <p class="text-3xl font-bold text-green-600">98%</p>
+                                </div>
+                                <div class="bg-green-100 p-3 rounded-lg">
+                                    <i class="fas fa-heartbeat text-green-600 text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Analytics Charts -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                        <div class="bg-white rounded-lg shadow-md p-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">System Usage</h3>
+                            <canvas id="systemUsageChart" width="400" height="200"></canvas>
+                        </div>
+                        <div class="bg-white rounded-lg shadow-md p-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">User Growth</h3>
+                            <canvas id="userGrowthChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Management Options -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div class="bg-white rounded-lg p-6 shadow-md card-hover cursor-pointer" onclick="manageUsers()">
+                            <div class="text-center">
+                                <div class="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <i class="fas fa-users-cog text-blue-600 text-2xl"></i>
+                                </div>
+                                <h3 class="text-lg font-semibold text-gray-800 mb-2">User Management</h3>
+                                <p class="text-gray-600 text-sm">Manage doctors, patients, and staff accounts</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-lg p-6 shadow-md card-hover cursor-pointer" onclick="systemSettings()">
+                            <div class="text-center">
+                                <div class="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <i class="fas fa-cogs text-purple-600 text-2xl"></i>
+                                </div>
+                                <h3 class="text-lg font-semibold text-gray-800 mb-2">System Settings</h3>
+                                <p class="text-gray-600 text-sm">Configure system parameters and preferences</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-lg p-6 shadow-md card-hover cursor-pointer" onclick="viewReports()">
+                            <div class="text-center">
+                                <div class="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <i class="fas fa-chart-bar text-green-600 text-2xl"></i>
+                                </div>
+                                <h3 class="text-lg font-semibold text-gray-800 mb-2">Reports & Analytics</h3>
+                                <p class="text-gray-600 text-sm">View system reports and analytics</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Nurse Portal -->
+    <div id="nursePortal" class="page">
+        <div class="min-h-screen bg-gray-50">
+            <!-- Header -->
+            <header class="bg-white shadow-sm">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="flex justify-between items-center py-6">
+                        <div class="flex items-center">
+                            <div class="medical-gradient w-10 h-10 rounded-lg flex items-center justify-center mr-3">
+                                <i class="fas fa-user-nurse text-white"></i>
+                            </div>
+                            <div>
+                                <h1 class="text-2xl font-bold text-gray-900">Nurse Portal</h1>
+                                <p class="text-sm text-gray-600">Welcome, Nurse Jennifer</p>
+                            </div>
+                        </div>
+                        <button onclick="logout()" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors">
+                            <i class="fas fa-sign-out-alt mr-2"></i>
+                            Logout
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Content -->
+            <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+                <div class="px-4 py-6 sm:px-0">
+                    <!-- Ward Overview -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <div class="bg-white rounded-lg p-6 shadow-md">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-600 text-sm">Assigned Patients</p>
+                                    <p class="text-3xl font-bold text-pink-600">12</p>
+                                </div>
+                                <div class="bg-pink-100 p-3 rounded-lg">
+                                    <i class="fas fa-bed text-pink-600 text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-lg p-6 shadow-md">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-600 text-sm">Medications Due</p>
+                                    <p class="text-3xl font-bold text-orange-600">8</p>
+                                </div>
+                                <div class="bg-orange-100 p-3 rounded-lg">
+                                    <i class="fas fa-pills text-orange-600 text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-lg p-6 shadow-md">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-600 text-sm">Vitals Pending</p>
+                                    <p class="text-3xl font-bold text-blue-600">5</p>
+                                </div>
+                                <div class="bg-blue-100 p-3 rounded-lg">
+                                    <i class="fas fa-heartbeat text-blue-600 text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-lg p-6 shadow-md">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-600 text-sm">Critical Alerts</p>
+                                    <p class="text-3xl font-bold text-red-600">2</p>
+                                </div>
+                                <div class="bg-red-100 p-3 rounded-lg">
+                                    <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Vitals Monitoring -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                        <div class="bg-white rounded-lg shadow-md p-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Patient Vitals Overview</h3>
+                            <canvas id="vitalsChart" width="400" height="200"></canvas>
+                        </div>
+                        <div class="bg-white rounded-lg shadow-md p-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Ward Occupancy</h3>
+                            <canvas id="wardChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Patient Care Tasks -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div class="bg-white rounded-lg shadow-md p-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Today's Tasks</h3>
+                            <div class="space-y-4">
+                                <div class="flex items-center space-x-3 p-3 bg-red-50 rounded-lg border-l-4 border-red-500">
+                                    <input type="checkbox" class="rounded">
+                                    <div class="flex-1">
+                                        <p class="font-medium text-gray-800">Administer medication - Room 201</p>
+                                        <p class="text-sm text-gray-600">John Smith - Lisinopril 10mg</p>
+                                        <p class="text-xs text-red-600">Due: 10:00 AM</p>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+                                    <input type="checkbox" class="rounded">
+                                    <div class="flex-1">
+                                        <p class="font-medium text-gray-800">Check vitals - Room 203</p>
+                                        <p class="text-sm text-gray-600">Maria Rodriguez</p>
+                                        <p class="text-xs text-blue-600">Due: 11:00 AM</p>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center space-x-3 p-3 bg-green-50 rounded-lg border-l-4 border-green-500">
+                                    <input type="checkbox" class="rounded" checked>
+                                    <div class="flex-1">
+                                        <p class="font-medium text-gray-800">Wound dressing - Room 205</p>
+                                        <p class="text-sm text-gray-600">Robert Wilson</p>
+                                        <p class="text-xs text-green-600">Completed</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-lg shadow-md p-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Patient Alerts</h3>
+                            <div class="space-y-4">
+                                <div class="p-3 bg-red-50 rounded-lg border border-red-200">
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <i class="fas fa-exclamation-triangle text-red-600"></i>
+                                        <span class="font-medium text-red-800">Critical Alert</span>
+                                    </div>
+                                    <p class="text-sm text-gray-700">Patient in Room 207 - Irregular heartbeat detected</p>
+                                    <p class="text-xs text-gray-500">5 minutes ago</p>
+                                </div>
+
+                                <div class="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <i class="fas fa-clock text-yellow-600"></i>
+                                        <span class="font-medium text-yellow-800">Medication Reminder</span>
+                                    </div>
+                                    <p class="text-sm text-gray-700">Room 201 - Pain medication due in 15 minutes</p>
+                                    <p class="text-xs text-gray-500">System reminder</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-6 max-w-4xl w-full mx-4 max-h-96 overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="modalTitle" class="text-xl font-bold text-gray-800"></h3>
+                <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="modalContent" class="text-gray-600"></div>
+            <div class="flex justify-end space-x-3 mt-6">
+                <button onclick="closeModal()" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">
+                    Close
+                </button>
+                <button id="modalAction" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                    Confirm
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let currentUser = null;
+        let currentRole = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCurrentDate();
+            setTodayDate();
+            initializeDarkMode();
+            setupLiveValidation();
+            
+            // Check if user is already logged in
+            const savedUser = localStorage.getItem('currentUser');
+            const savedRole = localStorage.getItem('currentRole');
+            
+            if (savedUser && savedRole) {
+                currentUser = JSON.parse(savedUser);
+                currentRole = savedRole;
+                showPortal(savedRole);
+                // Initialize charts after portal is shown
+                setTimeout(() => initializeCharts(savedRole), 100);
+            }
+        });
+
+        // Chart initialization
+        function initializeCharts(role) {
+            if (role === 'doctor') {
+                initializeDoctorCharts();
+            } else if (role === 'patient') {
+                initializePatientCharts();
+            } else if (role === 'admin') {
+                initializeAdminCharts();
+            } else if (role === 'nurse') {
+                initializeNurseCharts();
+            }
+        }
+
+        function initializeDoctorCharts() {
+            // Appointments Chart
+            const appointmentsCtx = document.getElementById('appointmentsChart');
+            if (appointmentsCtx) {
+                new Chart(appointmentsCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                        datasets: [{
+                            label: 'Appointments',
+                            data: [8, 12, 6, 15, 10, 4, 2],
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: '#f3f4f6'
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Demographics Chart
+            const demographicsCtx = document.getElementById('demographicsChart');
+            if (demographicsCtx) {
+                new Chart(demographicsCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['18-30', '31-45', '46-60', '60+'],
+                        datasets: [{
+                            data: [25, 35, 30, 10],
+                            backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    padding: 20,
+                                    usePointStyle: true
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function initializePatientCharts() {
+            // Health Trends Chart
+            const healthCtx = document.getElementById('patientHealthChart');
+            if (healthCtx) {
+                new Chart(healthCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                        datasets: [{
+                            label: 'Blood Pressure (Systolic)',
+                            data: [125, 128, 122, 120, 118, 115],
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            tension: 0.4
+                        }, {
+                            label: 'Heart Rate',
+                            data: [72, 75, 70, 68, 70, 72],
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: false,
+                                grid: {
+                                    color: '#f3f4f6'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Appointment History Chart
+            const appointmentCtx = document.getElementById('patientAppointmentsChart');
+            if (appointmentCtx) {
+                new Chart(appointmentCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                        datasets: [{
+                            label: 'Appointments',
+                            data: [2, 1, 3, 2, 1, 2],
+                            backgroundColor: '#10b981',
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: '#f3f4f6'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function initializeAdminCharts() {
+            // System Usage Chart
+            const usageCtx = document.getElementById('systemUsageChart');
+            if (usageCtx) {
+                new Chart(usageCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
+                        datasets: [{
+                            label: 'Active Users',
+                            data: [45, 25, 180, 220, 195, 120],
+                            borderColor: '#8b5cf6',
+                            backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: '#f3f4f6'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // User Growth Chart
+            const growthCtx = document.getElementById('userGrowthChart');
+            if (growthCtx) {
+                new Chart(growthCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                        datasets: [{
+                            label: 'New Users',
+                            data: [45, 52, 38, 67, 49, 73],
+                            backgroundColor: '#06b6d4',
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: '#f3f4f6'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function initializeNurseCharts() {
+            // Vitals Chart
+            const vitalsCtx = document.getElementById('vitalsChart');
+            if (vitalsCtx) {
+                new Chart(vitalsCtx, {
+                    type: 'radar',
+                    data: {
+                        labels: ['Normal', 'Elevated', 'High', 'Critical', 'Stable'],
+                        datasets: [{
+                            label: 'Patient Status',
+                            data: [8, 3, 2, 1, 10],
+                            backgroundColor: 'rgba(236, 72, 153, 0.2)',
+                            borderColor: '#ec4899',
+                            pointBackgroundColor: '#ec4899'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            r: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: '#f3f4f6'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Ward Occupancy Chart
+            const wardCtx = document.getElementById('wardChart');
+            if (wardCtx) {
+                new Chart(wardCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Occupied', 'Available', 'Maintenance'],
+                        datasets: [{
+                            data: [75, 20, 5],
+                            backgroundColor: ['#f59e0b', '#10b981', '#6b7280'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Dark mode functionality
+        function initializeDarkMode() {
+            const isDark = localStorage.getItem('darkMode') === 'true';
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+                document.getElementById('darkModeIcon').className = 'fas fa-sun text-yellow-400';
+            }
+        }
+
+        function toggleDarkMode() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('darkMode', isDark);
+            const icon = document.getElementById('darkModeIcon');
+            icon.className = isDark ? 'fas fa-sun text-yellow-400' : 'fas fa-moon text-gray-600';
+            
+            showNotification(
+                isDark ? 'Dark mode enabled' : 'Light mode enabled', 
+                'info', 
+                2000
+            );
+        }
+
+        // Password visibility toggle
+        function togglePasswordVisibility(inputId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(inputId + '-icon');
+            
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'fas fa-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'fas fa-eye';
+            }
+        }
+
+        // Live validation setup
+        function setupLiveValidation() {
+            const passwordInput = document.getElementById('registerPassword');
+            const confirmInput = document.getElementById('confirmPassword');
+            
+            if (passwordInput) {
+                passwordInput.addEventListener('input', checkPasswordStrength);
+            }
+            
+            if (confirmInput) {
+                confirmInput.addEventListener('input', checkPasswordMatch);
+            }
+        }
+
+        function checkPasswordStrength() {
+            const password = document.getElementById('registerPassword').value;
+            const strengthDiv = document.getElementById('passwordStrength');
+            
+            if (!password) {
+                strengthDiv.innerHTML = '';
+                return;
+            }
+            
+            let strength = 0;
+            let feedback = [];
+            
+            if (password.length >= 8) strength++;
+            else feedback.push('At least 8 characters');
+            
+            if (/[A-Z]/.test(password)) strength++;
+            else feedback.push('One uppercase letter');
+            
+            if (/[a-z]/.test(password)) strength++;
+            else feedback.push('One lowercase letter');
+            
+            if (/\d/.test(password)) strength++;
+            else feedback.push('One number');
+            
+            if (/[^A-Za-z0-9]/.test(password)) strength++;
+            else feedback.push('One special character');
+            
+            const colors = ['text-red-500', 'text-red-400', 'text-yellow-500', 'text-blue-500', 'text-green-500'];
+            const labels = ['Very Weak', 'Weak', 'Fair', 'Good', 'Strong'];
+            
+            strengthDiv.innerHTML = `
+                <div class="flex items-center space-x-2">
+                    <div class="flex space-x-1">
+                        ${Array.from({length: 5}, (_, i) => 
+                            `<div class="w-4 h-2 rounded ${i < strength ? colors[strength-1].replace('text-', 'bg-') : 'bg-gray-200'}"></div>`
+                        ).join('')}
+                    </div>
+                    <span class="${colors[strength-1] || 'text-gray-400'} font-medium">${labels[strength-1] || 'Too Short'}</span>
+                </div>
+                ${feedback.length > 0 ? `<p class="text-xs text-gray-500 mt-1">Missing: ${feedback.join(', ')}</p>` : ''}
+            `;
+        }
+
+        function checkPasswordMatch() {
+            const password = document.getElementById('registerPassword').value;
+            const confirm = document.getElementById('confirmPassword').value;
+            const matchDiv = document.getElementById('passwordMatch');
+            
+            if (!confirm) {
+                matchDiv.innerHTML = '';
+                return;
+            }
+            
+            if (password === confirm) {
+                matchDiv.innerHTML = '<p class="text-green-500 text-xs flex items-center"><i class="fas fa-check mr-1"></i>Passwords match</p>';
+            } else {
+                matchDiv.innerHTML = '<p class="text-red-500 text-xs flex items-center"><i class="fas fa-times mr-1"></i>Passwords do not match</p>';
+            }
+        }
+
+        // Authentication functions
+        function handleLogin(event) {
+            event.preventDefault();
+            
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const role = document.getElementById('userRole').value;
+            
+            // Demo authentication - in real app, this would be server-side
+            const validCredentials = {
+                'doctor@medicare.com': { password: 'password123', role: 'doctor', name: 'Dr. Sarah Johnson' },
+                'patient@medicare.com': { password: 'password123', role: 'patient', name: 'John Smith' },
+                'admin@medicare.com': { password: 'password123', role: 'admin', name: 'Admin User' },
+                'nurse@medicare.com': { password: 'password123', role: 'nurse', name: 'Nurse Jennifer' }
+            };
+            
+            const user = validCredentials[email];
+            
+            if (user && user.password === password && user.role === role) {
+                currentUser = { email, name: user.name };
+                currentRole = role;
+                
+                // Save to localStorage
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
+                localStorage.setItem('currentRole', currentRole);
+                
+                showPortal(role);
+                showNotification('Login successful!', 'success');
+            } else {
+                showNotification('Invalid credentials. Please check your email, password, and role.', 'error');
+            }
+        }
+
+        function loginAs(role) {
+            // Quick login for role selection
+            const users = {
+                'doctor': { email: 'doctor@medicare.com', name: 'Dr. Sarah Johnson' },
+                'patient': { email: 'patient@medicare.com', name: 'John Smith' },
+                'admin': { email: 'admin@medicare.com', name: 'Admin User' },
+                'nurse': { email: 'nurse@medicare.com', name: 'Nurse Jennifer' }
+            };
+            
+            currentUser = users[role];
+            currentRole = role;
+            
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            localStorage.setItem('currentRole', currentRole);
+            
+            showPortal(role);
+            showNotification(`Welcome, ${currentUser.name}!`, 'success');
+        }
+
+        function showPortal(role) {
+            // Hide all pages
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            // Show appropriate portal
+            const portals = {
+                'doctor': 'doctorPortal',
+                'patient': 'patientPortal',
+                'admin': 'adminPortal',
+                'nurse': 'nursePortal'
+            };
+            
+            const portalId = portals[role];
+            if (portalId) {
+                document.getElementById(portalId).classList.add('active');
+                // Initialize charts after portal is shown
+                setTimeout(() => initializeCharts(role), 100);
+            }
+        }
+
+        // New navigation functions
+        function toggleProfileMenu() {
+            const dropdown = document.getElementById('profileDropdown');
+            dropdown.classList.toggle('hidden');
+        }
+
+        function toggleNotifications() {
+            showModal(
+                'Notifications',
+                `
+                <div class="space-y-4">
+                    <div class="flex items-center space-x-3 p-3 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+                        <i class="fas fa-info-circle text-blue-600"></i>
+                        <div class="flex-1">
+                            <p class="font-medium text-blue-800">System Update</p>
+                            <p class="text-sm text-blue-700">New features available in patient portal</p>
+                            <p class="text-xs text-blue-600">2 hours ago</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3 p-3 bg-green-50 rounded-lg border-l-4 border-green-500">
+                        <i class="fas fa-check-circle text-green-600"></i>
+                        <div class="flex-1">
+                            <p class="font-medium text-green-800">Appointment Confirmed</p>
+                            <p class="text-sm text-green-700">John Smith - Tomorrow at 10:00 AM</p>
+                            <p class="text-xs text-green-600">1 hour ago</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3 p-3 bg-yellow-50 rounded-lg border-l-4 border-yellow-500">
+                        <i class="fas fa-exclamation-triangle text-yellow-600"></i>
+                        <div class="flex-1">
+                            <p class="font-medium text-yellow-800">Lab Results Ready</p>
+                            <p class="text-sm text-yellow-700">Maria Rodriguez - Blood work completed</p>
+                            <p class="text-xs text-yellow-600">30 minutes ago</p>
+                        </div>
+                    </div>
+                </div>
+                `,
+                'Mark All Read',
+                () => {
+                    showNotification('All notifications marked as read', 'success');
+                    closeModal();
+                }
+            );
+        }
+
+        function quickAddPatient() {
+            showModal(
+                'Quick Add Patient',
+                `
+                <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                            <input type="text" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="John">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                            <input type="text" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Smith">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <input type="email" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="john.smith@email.com">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                            <input type="tel" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="(555) 123-4567">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
+                            <input type="date" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Emergency Contact</label>
+                        <input type="text" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Contact name and phone">
+                    </div>
+                </div>
+                `,
+                'Add Patient',
+                () => {
+                    showNotification('Patient added successfully!', 'success');
+                    closeModal();
+                }
+            );
+        }
+
+        function openSettings() {
+            showModal(
+                'Settings',
+                `
+                <div class="space-y-6">
+                    <div>
+                        <h4 class="font-semibold text-gray-800 mb-3">Appearance</h4>
+                        <div class="space-y-2">
+                            <label class="flex items-center">
+                                <input type="radio" name="theme" value="light" class="mr-2">
+                                <span class="text-sm">Light Mode</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="theme" value="dark" class="mr-2">
+                                <span class="text-sm">Dark Mode</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="radio" name="theme" value="auto" class="mr-2" checked>
+                                <span class="text-sm">Auto (System)</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-gray-800 mb-3">Notifications</h4>
+                        <div class="space-y-2">
+                            <label class="flex items-center justify-between">
+                                <span class="text-sm">Email Notifications</span>
+                                <input type="checkbox" class="toggle" checked>
+                            </label>
+                            <label class="flex items-center justify-between">
+                                <span class="text-sm">Push Notifications</span>
+                                <input type="checkbox" class="toggle" checked>
+                            </label>
+                            <label class="flex items-center justify-between">
+                                <span class="text-sm">SMS Alerts</span>
+                                <input type="checkbox" class="toggle">
+                            </label>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-gray-800 mb-3">Privacy</h4>
+                        <div class="space-y-2">
+                            <label class="flex items-center justify-between">
+                                <span class="text-sm">Share Analytics</span>
+                                <input type="checkbox" class="toggle">
+                            </label>
+                            <label class="flex items-center justify-between">
+                                <span class="text-sm">Activity Tracking</span>
+                                <input type="checkbox" class="toggle" checked>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                `,
+                'Save Settings',
+                () => {
+                    showNotification('Settings saved successfully!', 'success');
+                    closeModal();
+                }
+            );
+        }
+
+        function viewProfile() {
+            const dropdown = document.getElementById('profileDropdown');
+            dropdown.classList.add('hidden');
+            
+            showModal(
+                'Profile Information',
+                `
+                <div class="space-y-4">
+                    <div class="text-center">
+                        <div class="w-20 h-20 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <span class="text-white font-bold text-2xl">SJ</span>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800">Dr. Sarah Johnson</h3>
+                        <p class="text-gray-600">Cardiologist</p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <p class="text-gray-600">Employee ID</p>
+                            <p class="font-medium">DOC-2024-001</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600">Department</p>
+                            <p class="font-medium">Cardiology</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600">Email</p>
+                            <p class="font-medium">sarah.johnson@medicare.com</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600">Phone</p>
+                            <p class="font-medium">(555) 123-4567</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600">License</p>
+                            <p class="font-medium">MD-12345-CA</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600">Years of Experience</p>
+                            <p class="font-medium">12 years</p>
+                        </div>
+                    </div>
+                </div>
+                `,
+                'Edit Profile',
+                () => {
+                    closeModal();
+                    editProfile();
+                }
+            );
+        }
+
+        function editProfile() {
+            showModal(
+                'Edit Profile',
+                `
+                <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                            <input type="text" value="Sarah" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                            <input type="text" value="Johnson" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <input type="email" value="sarah.johnson@medicare.com" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                        <input type="tel" value="(555) 123-4567" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Specialization</label>
+                        <input type="text" value="Cardiology" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                `,
+                'Save Changes',
+                () => {
+                    showNotification('Profile updated successfully!', 'success');
+                    closeModal();
+                }
+            );
+        }
+
+        function changePassword() {
+            const dropdown = document.getElementById('profileDropdown');
+            dropdown.classList.add('hidden');
+            
+            showModal(
+                'Change Password',
+                `
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+                        <input type="password" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Enter current password">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                        <input type="password" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Enter new password">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                        <input type="password" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Confirm new password">
+                    </div>
+                    <div class="bg-blue-50 p-3 rounded-lg">
+                        <p class="text-sm text-blue-700">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Password must be at least 8 characters with uppercase, lowercase, number, and special character.
+                        </p>
+                    </div>
+                </div>
+                `,
+                'Change Password',
+                () => {
+                    showNotification('Password changed successfully!', 'success');
+                    closeModal();
+                }
+            );
+        }
+
+        function getHelp() {
+            const dropdown = document.getElementById('profileDropdown');
+            dropdown.classList.add('hidden');
+            
+            showModal(
+                'Help & Support',
+                `
+                <div class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-blue-50 p-4 rounded-lg cursor-pointer hover:bg-blue-100 transition-colors">
+                            <div class="flex items-center space-x-3">
+                                <i class="fas fa-book text-blue-600 text-xl"></i>
+                                <div>
+                                    <h4 class="font-medium text-blue-800">User Guide</h4>
+                                    <p class="text-sm text-blue-600">Complete system documentation</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-green-50 p-4 rounded-lg cursor-pointer hover:bg-green-100 transition-colors">
+                            <div class="flex items-center space-x-3">
+                                <i class="fas fa-video text-green-600 text-xl"></i>
+                                <div>
+                                    <h4 class="font-medium text-green-800">Video Tutorials</h4>
+                                    <p class="text-sm text-green-600">Step-by-step video guides</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-purple-50 p-4 rounded-lg cursor-pointer hover:bg-purple-100 transition-colors">
+                            <div class="flex items-center space-x-3">
+                                <i class="fas fa-headset text-purple-600 text-xl"></i>
+                                <div>
+                                    <h4 class="font-medium text-purple-800">Live Support</h4>
+                                    <p class="text-sm text-purple-600">Chat with support team</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-orange-50 p-4 rounded-lg cursor-pointer hover:bg-orange-100 transition-colors">
+                            <div class="flex items-center space-x-3">
+                                <i class="fas fa-envelope text-orange-600 text-xl"></i>
+                                <div>
+                                    <h4 class="font-medium text-orange-800">Email Support</h4>
+                                    <p class="text-sm text-orange-600">Send us your questions</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-medium text-gray-800 mb-2">Quick Links</h4>
+                        <div class="space-y-1 text-sm">
+                            <a href="#" class="text-blue-600 hover:text-blue-800 block">• Keyboard Shortcuts</a>
+                            <a href="#" class="text-blue-600 hover:text-blue-800 block">• System Requirements</a>
+                            <a href="#" class="text-blue-600 hover:text-blue-800 block">• Privacy Policy</a>
+                            <a href="#" class="text-blue-600 hover:text-blue-800 block">• Terms of Service</a>
+                        </div>
+                    </div>
+                </div>
+                `,
+                'Close'
+            );
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            const profileButton = e.target.closest('[onclick="toggleProfileMenu()"]');
+            const dropdown = document.getElementById('profileDropdown');
+            
+            if (!profileButton && dropdown && !dropdown.contains(e.target)) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        function showPage(pageId) {
+            // Add fade out to current page
+            const currentPage = document.querySelector('.page.active');
+            if (currentPage) {
+                currentPage.style.opacity = '0';
+                setTimeout(() => {
+                    currentPage.classList.remove('active');
+                    
+                    // Show new page with fade in
+                    const newPage = document.getElementById(pageId);
+                    newPage.classList.add('active', 'page-transition');
+                    newPage.style.opacity = '0';
+                    
+                    setTimeout(() => {
+                        newPage.style.opacity = '1';
+                    }, 50);
+                }, 200);
+            } else {
+                // First page load
+                document.getElementById(pageId).classList.add('active', 'page-transition');
+            }
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                currentUser = null;
+                currentRole = null;
+                localStorage.removeItem('currentUser');
+                localStorage.removeItem('currentRole');
+                
+                // Reset forms
+                document.getElementById('loginForm').reset();
+                
+                showPage('loginPage');
+                showNotification('Logged out successfully!', 'success');
+            }
+        }
+
+        function showRegisterForm() {
+            showPage('registerPage');
+        }
+
+        function handleRegistration(event) {
+            event.preventDefault();
+            
+            const firstName = document.getElementById('firstName').value;
+            const lastName = document.getElementById('lastName').value;
+            const email = document.getElementById('registerEmail').value;
+            const phone = document.getElementById('phoneNumber').value;
+            const dateOfBirth = document.getElementById('dateOfBirth').value;
+            const role = document.getElementById('registerRole').value;
+            const password = document.getElementById('registerPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const licenseNumber = document.getElementById('licenseNumber').value;
+            
+            // Validation
+            if (password !== confirmPassword) {
+                showNotification('Passwords do not match!', 'error');
+                return;
+            }
+            
+            if (password.length < 8) {
+                showNotification('Password must be at least 8 characters long!', 'error');
+                return;
+            }
+            
+            if ((role === 'doctor' || role === 'nurse') && !licenseNumber) {
+                showNotification('Medical license number is required for healthcare professionals!', 'error');
+                return;
+            }
+            
+            // Check if email already exists (demo check)
+            const existingEmails = ['doctor@medicare.com', 'patient@medicare.com', 'admin@medicare.com', 'nurse@medicare.com'];
+            if (existingEmails.includes(email)) {
+                showNotification('An account with this email already exists!', 'error');
+                return;
+            }
+            
+            // Simulate registration process
+            showModal(
+                'Registration Successful!',
+                `
+                <div class="text-center space-y-4">
+                    <div class="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto">
+                        <i class="fas fa-check text-green-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-800">Welcome to MediCare, ${firstName}!</h3>
+                    <div class="text-left bg-gray-50 p-4 rounded-lg">
+                        <p class="text-sm text-gray-600 mb-2"><strong>Account Details:</strong></p>
+                        <p class="text-sm text-gray-600">Name: ${firstName} ${lastName}</p>
+                        <p class="text-sm text-gray-600">Email: ${email}</p>
+                        <p class="text-sm text-gray-600">Role: ${role.charAt(0).toUpperCase() + role.slice(1)}</p>
+                        ${(role === 'doctor' || role === 'nurse') ? `<p class="text-sm text-gray-600">License: ${licenseNumber}</p>` : ''}
+                    </div>
+                    ${(role === 'doctor' || role === 'nurse') ? 
+                        '<div class="bg-yellow-50 p-3 rounded-lg"><p class="text-sm text-yellow-700"><i class="fas fa-clock mr-1"></i>Your account is pending verification. You will receive an email once approved.</p></div>' : 
+                        '<div class="bg-green-50 p-3 rounded-lg"><p class="text-sm text-green-700"><i class="fas fa-check-circle mr-1"></i>Your account is ready to use! You can now sign in.</p></div>'
+                    }
+                </div>
+                `,
+                'Continue to Login',
+                () => {
+                    closeModal();
+                    showPage('loginPage');
+                    showNotification('Registration completed successfully!', 'success');
+                    
+                    // Pre-fill login form for convenience
+                    document.getElementById('loginEmail').value = email;
+                    document.getElementById('userRole').value = role;
+                }
+            );
+        }
+
+        // Show/hide medical license field based on role selection
+        document.addEventListener('change', function(e) {
+            if (e.target.id === 'registerRole') {
+                const licenseField = document.getElementById('medicalLicense');
+                const licenseInput = document.getElementById('licenseNumber');
+                
+                if (e.target.value === 'doctor' || e.target.value === 'nurse') {
+                    licenseField.classList.remove('hidden');
+                    licenseInput.required = true;
+                } else {
+                    licenseField.classList.add('hidden');
+                    licenseInput.required = false;
+                    licenseInput.value = '';
+                }
+            }
+        });
+
+        function showForgotPassword() {
+            showModal(
+                'Forgot Password',
+                `
+                <div class="space-y-4">
+                    <p>Enter your email address and we'll send you a link to reset your password.</p>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                        <input type="email" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Enter your email">
+                    </div>
+                </div>
+                `,
+                'Send Reset Link',
+                () => {
+                    showNotification('Password reset link sent to your email!', 'success');
+                    closeModal();
+                }
+            );
+        }
+
+        // Navigation functions for doctor portal
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Show selected section
+            document.getElementById(sectionId).classList.add('active');
+            
+            // Update sidebar
+            document.querySelectorAll('.sidebar-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Update page title
+            const titles = {
+                'dashboard': 'Dashboard',
+                'appointments': 'Appointments',
+                'patients': 'My Patients',
+                'consultations': 'Consultations',
+                'prescriptions': 'Prescriptions',
+                'reports': 'Medical Reports',
+                'schedule': 'My Schedule'
+            };
+            document.getElementById('pageTitle').textContent = titles[sectionId];
+            
+            // Close mobile menu
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar) {
+                sidebar.classList.remove('open');
+            }
+        }
+
+        // Mobile menu toggle
+        document.addEventListener('click', function(e) {
+            if (e.target.id === 'mobileMenuBtn' || e.target.closest('#mobileMenuBtn')) {
+                const sidebar = document.getElementById('sidebar');
+                if (sidebar) {
+                    sidebar.classList.toggle('open');
+                }
+            }
+        });
+
+        // Patient portal functions
+        function bookAppointment() {
+            showModal(
+                'Book Appointment',
+                `
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Select Doctor</label>
+                        <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option>Dr. Sarah Johnson - Cardiology</option>
+                            <option>Dr. Michael Chen - Internal Medicine</option>
+                            <option>Dr. Emily Davis - Dermatology</option>
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Preferred Date</label>
+                            <input type="date" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" min="${new Date().toISOString().split('T')[0]}">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Preferred Time</label>
+                            <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                                <option>9:00 AM</option>
+                                <option>10:00 AM</option>
+                                <option>11:00 AM</option>
+                                <option>2:00 PM</option>
+                                <option>3:00 PM</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Reason for Visit</label>
+                        <textarea class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 h-20" placeholder="Describe your symptoms or reason for visit..."></textarea>
+                    </div>
+                </div>
+                `,
+                'Book Appointment',
+                () => {
+                    showNotification('Appointment request submitted! You will receive a confirmation shortly.', 'success');
+                    closeModal();
+                }
+            );
+        }
+
+        function viewTestResults() {
+            showModal(
+                'Test Results',
+                `
+                <div class="space-y-4">
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <h4 class="font-semibold text-green-800">Blood Work - Complete</h4>
+                            <span class="text-xs text-green-600">Dec 15, 2024</span>
+                        </div>
+                        <p class="text-sm text-green-700">All values within normal range. No concerns identified.</p>
+                        <button class="mt-2 text-green-600 hover:text-green-800 text-sm font-medium">View Detailed Report →</button>
+                    </div>
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <h4 class="font-semibold text-blue-800">ECG - Complete</h4>
+                            <span class="text-xs text-blue-600">Dec 10, 2024</span>
+                        </div>
+                        <p class="text-sm text-blue-700">Normal sinus rhythm. Heart function appears healthy.</p>
+                        <button class="mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium">View Detailed Report →</button>
+                    </div>
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <h4 class="font-semibold text-yellow-800">Chest X-Ray - Pending</h4>
+                            <span class="text-xs text-yellow-600">Ordered Dec 16, 2024</span>
+                        </div>
+                        <p class="text-sm text-yellow-700">Results will be available within 24-48 hours.</p>
+                    </div>
+                </div>
+                `,
+                'Close'
+            );
+        }
+
+        function viewPrescriptions() {
+            showModal(
+                'Current Prescriptions',
+                `
+                <div class="space-y-4">
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <h4 class="font-semibold text-gray-800">Lisinopril 10mg</h4>
+                                <p class="text-sm text-gray-600">Once daily with food</p>
+                            </div>
+                            <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Active</span>
+                        </div>
+                        <div class="text-xs text-gray-500">
+                            <p>Prescribed by: Dr. Sarah Johnson</p>
+                            <p>Start Date: Nov 15, 2024</p>
+                            <p>Refills Remaining: 2</p>
+                        </div>
+                        <button class="mt-2 bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">Request Refill</button>
+                    </div>
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <h4 class="font-semibold text-gray-800">Metformin 500mg</h4>
+                                <p class="text-sm text-gray-600">Twice daily with meals</p>
+                            </div>
+                            <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Active</span>
+                        </div>
+                        <div class="text-xs text-gray-500">
+                            <p>Prescribed by: Dr. Michael Chen</p>
+                            <p>Start Date: Oct 20, 2024</p>
+                            <p>Refills Remaining: 1</p>
+                        </div>
+                        <button class="mt-2 bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">Request Refill</button>
+                    </div>
+                </div>
+                `,
+                'Close'
+            );
+        }
+
+        function messageDoctor() {
+            showModal(
+                'Message Your Doctor',
+                `
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Select Doctor</label>
+                        <select class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option>Dr. Sarah Johnson - Cardiology</option>
+                            <option>Dr. Michael Chen - Internal Medicine</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+                        <input type="text" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="Enter message subject">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Message</label>
+                        <textarea class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 h-32" placeholder="Type your message here..."></textarea>
+                    </div>
+                    <div class="bg-blue-50 p-3 rounded-lg">
+                        <p class="text-sm text-blue-700">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Your doctor will typically respond within 24-48 hours during business days.
+                        </p>
+                    </div>
+                </div>
+                `,
+                'Send Message',
+                () => {
+                    showNotification('Message sent successfully! Your doctor will respond soon.', 'success');
+                    closeModal();
+                }
+            );
+        }
+
+        // Admin portal functions
+        function manageUsers() {
+            showNotification('Loading user management interface...', 'success');
+        }
+
+        function systemSettings() {
+            showNotification('Loading system settings...', 'success');
+        }
+
+        function viewReports() {
+            showNotification('Loading reports and analytics...', 'success');
+        }
+
+        // Utility functions
+        function updateCurrentDate() {
+            const now = new Date();
+            const options = { month: 'short', day: 'numeric', year: 'numeric' };
+            const dateElement = document.getElementById('currentDate');
+            if (dateElement) {
+                dateElement.textContent = now.toLocaleDateString('en-US', options);
+            }
+        }
+
+        function setTodayDate() {
+            const today = new Date().toISOString().split('T')[0];
+            const dateInputs = document.querySelectorAll('input[type="date"]');
+            dateInputs.forEach(input => {
+                if (!input.value) input.value = today;
+            });
+        }
+
+        // Modal functions
+        function showModal(title, content, actionText, actionCallback) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalContent').innerHTML = content;
+            document.getElementById('modalAction').textContent = actionText || 'Confirm';
+            document.getElementById('modalAction').onclick = actionCallback || closeModal;
+            document.getElementById('modal').classList.remove('hidden');
+            document.getElementById('modal').classList.add('flex');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.add('hidden');
+            document.getElementById('modal').classList.remove('flex');
+        }
+
+        // Enhanced notification system
+        function showNotification(message, type = 'info', duration = 4000) {
+            const colors = {
+                success: 'bg-green-500 border-green-600',
+                error: 'bg-red-500 border-red-600',
+                warning: 'bg-yellow-500 border-yellow-600',
+                info: 'bg-blue-500 border-blue-600'
+            };
+            
+            const icons = {
+                success: 'fa-check-circle',
+                error: 'fa-exclamation-circle',
+                warning: 'fa-exclamation-triangle',
+                info: 'fa-info-circle'
+            };
+            
+            const notification = document.createElement('div');
+            notification.className = `fixed top-20 right-4 p-4 rounded-lg shadow-xl z-50 text-white border-l-4 transform translate-x-full transition-transform duration-300 ${colors[type]}`;
+            notification.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <i class="fas ${icons[type]} mr-3 text-lg"></i>
+                        <span class="font-medium">${message}</span>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Slide in animation
+            setTimeout(() => {
+                notification.classList.remove('translate-x-full');
+            }, 100);
+            
+            // Auto remove
+            setTimeout(() => {
+                notification.classList.add('translate-x-full');
+                setTimeout(() => {
+                    if (notification.parentNode) {
+                        notification.remove();
+                    }
+                }, 300);
+            }, duration);
+        }
+
+        // Doctor portal functions (simplified versions)
+        function startConsultation(patientId) {
+            showNotification('Starting consultation...', 'success');
+            showSection('consultations');
+        }
+
+        function toggleEmergencyAlerts() {
+            showModal(
+                'Emergency Alerts',
+                `
+                <div class="space-y-4">
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                            <div>
+                                <h4 class="font-semibold text-red-800">Critical Patient Alert</h4>
+                                <p class="text-sm text-red-700">Robert Wilson - Chest pain, requires immediate attention</p>
+                                <p class="text-xs text-red-600">5 minutes ago</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-clock text-orange-600 text-xl"></i>
+                            <div>
+                                <h4 class="font-semibold text-orange-800">Appointment Delay</h4>
+                                <p class="text-sm text-orange-700">Maria Rodriguez appointment running 15 minutes late</p>
+                                <p class="text-xs text-orange-600">10 minutes ago</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                `,
+                'Close'
+            );
+        }
+
+        function toggleMessages() {
+            showModal(
+                'Messages',
+                `
+                <div class="space-y-4">
+                    <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-medium">Dr. Michael Chen</h4>
+                            <span class="text-xs text-gray-500">2 hours ago</span>
+                        </div>
+                        <p class="text-sm text-gray-600">Consultation request for shared patient John Smith</p>
+                    </div>
+                    <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-medium">Pharmacy Department</h4>
+                            <span class="text-xs text-gray-500">4 hours ago</span>
+                        </div>
+                        <p class="text-sm text-gray-600">Prescription approval needed for Maria Rodriguez</p>
+                    </div>
+                </div>
+                `,
+                'Close'
+            );
+        }
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97bfae97807d3e27',t:'MTc1NzM0NzQ3MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
