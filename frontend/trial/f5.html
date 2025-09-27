@@ -1,0 +1,2334 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediCare Hospital System v10 - Enhanced & Fixed</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a'
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-in-out',
+                        'slide-up': 'slideUp 0.3s ease-out',
+                        'pulse-slow': 'pulse 3s infinite',
+                        'bounce-in': 'bounceIn 0.6s ease-out',
+                        'skeleton': 'skeleton 1.5s ease-in-out infinite alternate'
+                    }
+                }
+            }
+        }
+
+        // Global variables
+        let currentUser = null;
+        let isDarkMode = false;
+        let notificationCount = 0;
+
+        // Initialize everything when page loads
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log('Page loaded, initializing...');
+            updateDateTime();
+            setInterval(updateDateTime, 60000);
+            initializeMobileMenu();
+            initializeTooltips();
+            initializeNotifications();
+            checkDarkMode();
+        });
+
+        // Dark mode functionality
+        function toggleDarkMode() {
+            console.log('Toggling dark mode...');
+            isDarkMode = !isDarkMode;
+            const html = document.documentElement;
+            const icon = document.getElementById('darkModeIcon');
+
+            if (isDarkMode) {
+                html.classList.add('dark');
+                icon.className = 'fas fa-sun text-yellow-400';
+                localStorage.setItem('darkMode', 'true');
+            } else {
+                html.classList.remove('dark');
+                icon.className = 'fas fa-moon text-gray-600';
+                localStorage.setItem('darkMode', 'false');
+            }
+        }
+
+        function checkDarkMode() {
+            const savedMode = localStorage.getItem('darkMode');
+            if (savedMode === 'true') {
+                isDarkMode = true;
+                document.documentElement.classList.add('dark');
+                const icon = document.getElementById('darkModeIcon');
+                if (icon) icon.className = 'fas fa-sun text-yellow-400';
+            }
+        }
+
+        // Page navigation
+        function showPage(pageId) {
+            console.log('Showing page:', pageId);
+            // Hide all pages
+            const pages = document.querySelectorAll('.page');
+            pages.forEach(page => {
+                page.classList.remove('active');
+            });
+
+            // Show selected page
+            const targetPage = document.getElementById(pageId);
+            if (targetPage) {
+                targetPage.classList.add('active');
+
+                // Initialize charts if showing portals
+                setTimeout(() => {
+                    if (pageId === 'doctorPortal') {
+                        initializeDoctorCharts();
+                        initializeCalendar();
+                    } else if (pageId === 'patientPortal') {
+                        initializePatientCharts();
+                    } else if (pageId === 'adminPortal') {
+                        initializeAdminCharts();
+                    } else if (pageId === 'nursePortal') {
+                        initializeNurseCharts();
+                    }
+                }, 100);
+            }
+        }
+
+        // Login functionality
+        function handleLogin(event) {
+            event.preventDefault();
+            console.log('Handling login...');
+
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const role = document.getElementById('userRole').value;
+
+            if (!email || !password || !role) {
+                showNotification('Please fill in all fields', 'error');
+                return;
+            }
+
+            // Show loading
+            showLoading();
+
+            // Simulate login process
+            setTimeout(() => {
+                hideLoading();
+
+                // Set current user
+                currentUser = {
+                    email: email,
+                    role: role,
+                    name: getNameFromEmail(email)
+                };
+
+                // Navigate to appropriate portal
+                if (role === 'doctor') {
+                    showPage('doctorPortal');
+                } else if (role === 'patient') {
+                    showPage('patientPortal');
+                } else if (role === 'admin') {
+                    showPage('adminPortal');
+                } else if (role === 'nurse') {
+                    showPage('nursePortal');
+                }
+
+                showNotification(`Welcome ${currentUser.name}!`, 'success');
+            }, 1500);
+        }
+
+        // Registration functionality
+        function handleRegistration(event) {
+            event.preventDefault();
+            console.log('Handling registration...');
+
+            const firstName = document.getElementById('firstName').value;
+            const lastName = document.getElementById('lastName').value;
+            const email = document.getElementById('registerEmail').value;
+            const phone = document.getElementById('phoneNumber').value;
+            const dob = document.getElementById('dateOfBirth').value;
+            const role = document.getElementById('registerRole').value;
+            const password = document.getElementById('registerPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const agreeTerms = document.getElementById('agreeTerms').checked;
+
+            // Validation
+            if (!firstName || !lastName || !email || !phone || !dob || !role || !password || !confirmPassword) {
+                showNotification('Please fill in all required fields', 'error');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                showNotification('Passwords do not match', 'error');
+                return;
+            }
+
+            if (!agreeTerms) {
+                showNotification('Please agree to the terms and conditions', 'error');
+                return;
+            }
+
+            // Show loading
+            showLoading();
+
+            // Simulate registration process
+            setTimeout(() => {
+                hideLoading();
+                showNotification('Account created successfully! Please login.', 'success');
+                showPage('loginPage');
+
+                // Pre-fill login form
+                document.getElementById('loginEmail').value = email;
+                document.getElementById('userRole').value = role;
+            }, 2000);
+        }
+
+        // Show registration form
+        function showRegisterForm() {
+            console.log('Showing registration form...');
+            showPage('registerPage');
+        }
+
+        // Role-based login
+        function loginAs(role) {
+            console.log('Quick login as:', role);
+
+            // Set demo credentials
+            const credentials = {
+                doctor: { email: 'doctor@medicare.com', name: 'Dr. Sarah Johnson' },
+                patient: { email: 'patient@medicare.com', name: 'John Smith' },
+                admin: { email: 'admin@medicare.com', name: 'Admin User' },
+                nurse: { email: 'nurse@medicare.com', name: 'Nurse Wilson' }
+            };
+
+            showLoading();
+
+            setTimeout(() => {
+                hideLoading();
+                currentUser = {
+                    email: credentials[role].email,
+                    role: role,
+                    name: credentials[role].name
+                };
+
+                if (role === 'doctor') {
+                    showPage('doctorPortal');
+                } else if (role === 'patient') {
+                    showPage('patientPortal');
+                } else if (role === 'admin') {
+                    showPage('adminPortal');
+                } else if (role === 'nurse') {
+                    showPage('nursePortal');
+                }
+
+                showNotification(`Welcome ${currentUser.name}!`, 'success');
+            }, 1000);
+        }
+
+        // Logout functionality
+        function logout() {
+            console.log('Logging out...');
+            currentUser = null;
+            showPage('loginPage');
+            showNotification('Logged out successfully', 'info');
+        }
+
+        // Password visibility toggle
+        function togglePasswordVisibility(inputId) {
+            console.log('Toggling password visibility for:', inputId);
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(inputId + '-icon');
+
+            if (input && icon) {
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.className = 'fas fa-eye-slash';
+                } else {
+                    input.type = 'password';
+                    icon.className = 'fas fa-eye';
+                }
+            }
+        }
+
+        // Password strength checker
+        function checkPasswordStrength(password) {
+            const strengthDiv = document.getElementById('passwordStrength');
+            if (!strengthDiv) return;
+
+            let strength = 0;
+            let message = '';
+            let className = '';
+
+            if (password.length >= 8) strength++;
+            if (/[A-Z]/.test(password)) strength++;
+            if (/[a-z]/.test(password)) strength++;
+            if (/[0-9]/.test(password)) strength++;
+            if (/[^A-Za-z0-9]/.test(password)) strength++;
+
+            if (strength < 3) {
+                message = 'Weak password';
+                className = 'password-strength-weak';
+            } else if (strength < 4) {
+                message = 'Medium strength';
+                className = 'password-strength-medium';
+            } else {
+                message = 'Strong password';
+                className = 'password-strength-strong';
+            }
+
+            strengthDiv.textContent = message;
+            strengthDiv.className = `mt-2 text-sm ${className}`;
+        }
+
+        // Password match checker
+        function checkPasswordMatch() {
+            const password = document.getElementById('registerPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const matchDiv = document.getElementById('passwordMatch');
+
+            if (!matchDiv) return;
+
+            if (confirmPassword === '') {
+                matchDiv.textContent = '';
+                return;
+            }
+
+            if (password === confirmPassword) {
+                matchDiv.textContent = 'Passwords match';
+                matchDiv.className = 'mt-2 text-sm text-green-600';
+            } else {
+                matchDiv.textContent = 'Passwords do not match';
+                matchDiv.className = 'mt-2 text-sm text-red-600';
+            }
+        }
+
+        // Toggle medical license field
+        function toggleMedicalLicense() {
+            const role = document.getElementById('registerRole').value;
+            const licenseDiv = document.getElementById('medicalLicense');
+            const licenseInput = document.getElementById('licenseNumber');
+
+            if (role === 'doctor' || role === 'nurse') {
+                licenseDiv.classList.remove('hidden');
+                licenseInput.required = true;
+            } else {
+                licenseDiv.classList.add('hidden');
+                licenseInput.required = false;
+            }
+        }
+
+        // Profile picture preview
+        function previewProfilePicture(input) {
+            const preview = document.getElementById('profilePreview');
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    preview.innerHTML = `<img src="${e.target.result}" class="w-full h-full object-cover rounded-full">`;
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // Notification system
+        function showNotification(message, type = 'info') {
+            console.log('Showing notification:', message, type);
+            const container = document.getElementById('notificationContainer');
+            if (!container) return;
+
+            const notification = document.createElement('div');
+            notification.className = `notification-toast bg-white dark:bg-gray-800 border-l-4 p-4 rounded-lg shadow-xl`;
+
+            let borderColor = 'border-blue-500';
+            let icon = 'fas fa-info-circle text-blue-500';
+
+            if (type === 'success') {
+                borderColor = 'border-green-500';
+                icon = 'fas fa-check-circle text-green-500';
+            } else if (type === 'error') {
+                borderColor = 'border-red-500';
+                icon = 'fas fa-exclamation-circle text-red-500';
+            } else if (type === 'warning') {
+                borderColor = 'border-yellow-500';
+                icon = 'fas fa-exclamation-triangle text-yellow-500';
+            }
+
+            notification.className += ` ${borderColor}`;
+
+            notification.innerHTML = `
+                <div class="flex items-center">
+                    <i class="${icon} mr-3"></i>
+                    <div class="flex-1">
+                        <p class="text-gray-800 dark:text-white font-medium">${message}</p>
+                    </div>
+                    <button onclick="closeNotification(this)" class="ml-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+
+            container.appendChild(notification);
+
+            // Show notification
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 100);
+
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                closeNotification(notification.querySelector('button'));
+            }, 5000);
+        }
+
+        function closeNotification(button) {
+            const notification = button.closest('.notification-toast');
+            notification.classList.remove('show');
+            setTimeout(() => {
+                notification.remove();
+            }, 300);
+        }
+
+        // Loading overlay
+        function showLoading() {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) {
+                overlay.classList.remove('hidden');
+            }
+        }
+
+        function hideLoading() {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) {
+                overlay.classList.add('hidden');
+            }
+        }
+
+        // Utility functions
+        function updateDateTime() {
+            const now = new Date();
+            const options = {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            };
+            const dateElement = document.getElementById('currentDate');
+            if (dateElement) {
+                dateElement.textContent = now.toLocaleDateString('en-US', options);
+            }
+        }
+
+        function getNameFromEmail(email) {
+            const names = {
+                'doctor@medicare.com': 'Dr. Sarah Johnson',
+                'patient@medicare.com': 'John Smith',
+                'admin@medicare.com': 'Admin User',
+                'nurse@medicare.com': 'Nurse Wilson'
+            };
+            return names[email] || 'User';
+        }
+
+        function initializeMobileMenu() {
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            const sidebar = document.getElementById('sidebar');
+
+            if (mobileMenuBtn && sidebar) {
+                mobileMenuBtn.addEventListener('click', function () {
+                    sidebar.classList.toggle('open');
+                });
+
+                // Close sidebar when clicking outside on mobile
+                document.addEventListener('click', function (e) {
+                    if (window.innerWidth < 768 &&
+                        !sidebar.contains(e.target) &&
+                        !mobileMenuBtn.contains(e.target)) {
+                        sidebar.classList.remove('open');
+                    }
+                });
+            }
+        }
+
+        function initializeTooltips() {
+            // Tooltips are handled via CSS
+        }
+
+        function initializeNotifications() {
+            // Simulate periodic notifications
+            setTimeout(() => {
+                showNotification('Welcome to MediCare v10! All systems are operational.', 'success');
+            }, 2000);
+        }
+
+        // Doctor portal functions
+        function showSection(sectionId) {
+            console.log('Showing section:', sectionId);
+
+            // Update sidebar active state
+            const sidebarItems = document.querySelectorAll('.sidebar-item');
+            sidebarItems.forEach(item => {
+                item.classList.remove('active');
+            });
+
+            // Find and activate the clicked item
+            const activeItem = document.querySelector(`[onclick="showSection('${sectionId}')"]`);
+            if (activeItem) {
+                activeItem.classList.add('active');
+            }
+
+            // Hide all sections
+            const sections = document.querySelectorAll('.section');
+            sections.forEach(section => {
+                section.classList.remove('active');
+            });
+
+            // Show selected section
+            const targetSection = document.getElementById(sectionId);
+            if (targetSection) {
+                targetSection.classList.add('active');
+
+                // Update page title
+                const pageTitle = document.getElementById('pageTitle');
+                if (pageTitle) {
+                    const titles = {
+                        'dashboard': 'Dashboard',
+                        'calendar': 'Calendar',
+                        'appointments': 'Appointments',
+                        'patients': 'My Patients',
+                        'consultations': 'Consultations',
+                        'prescriptions': 'Prescriptions',
+                        'reports': 'Reports'
+                    };
+                    pageTitle.textContent = titles[sectionId] || 'Dashboard';
+                }
+
+                // Initialize specific functionality
+                if (sectionId === 'calendar') {
+                    initializeCalendar();
+                }
+            }
+        }
+
+        // Dropdown toggles
+        function toggleNotifications() {
+            console.log('Toggling notifications dropdown');
+            const dropdown = document.getElementById('notificationsDropdown');
+            if (dropdown) {
+                dropdown.classList.toggle('hidden');
+            }
+        }
+
+        function toggleMessages() {
+            console.log('Toggling messages');
+            showNotification('Messages feature coming soon!', 'info');
+        }
+
+        function toggleProfileMenu() {
+            console.log('Toggling profile menu');
+            const dropdown = document.getElementById('profileDropdown');
+            if (dropdown) {
+                dropdown.classList.toggle('hidden');
+            }
+        }
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', function (e) {
+            const notificationsDropdown = document.getElementById('notificationsDropdown');
+            const profileDropdown = document.getElementById('profileDropdown');
+
+            if (notificationsDropdown && !e.target.closest('.relative')) {
+                notificationsDropdown.classList.add('hidden');
+            }
+
+            if (profileDropdown && !e.target.closest('.relative')) {
+                profileDropdown.classList.add('hidden');
+            }
+        });
+
+        // Chart initialization functions
+        function initializeDoctorCharts() {
+            console.log('Initializing doctor charts...');
+
+            // Appointments Chart
+            const appointmentsCtx = document.getElementById('appointmentsChart');
+            if (appointmentsCtx && typeof Chart !== 'undefined') {
+                new Chart(appointmentsCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                        datasets: [{
+                            label: 'Appointments',
+                            data: [12, 19, 8, 15, 22, 8, 14],
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Demographics Chart
+            const demographicsCtx = document.getElementById('demographicsChart');
+            if (demographicsCtx && typeof Chart !== 'undefined') {
+                new Chart(demographicsCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Male', 'Female', 'Other'],
+                        datasets: [{
+                            data: [45, 52, 3],
+                            backgroundColor: ['#3b82f6', '#ec4899', '#10b981']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function initializePatientCharts() {
+            console.log('Initializing patient charts...');
+
+            // Health Chart
+            const healthCtx = document.getElementById('patientHealthChart');
+            if (healthCtx && typeof Chart !== 'undefined') {
+                new Chart(healthCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                        datasets: [{
+                            label: 'Blood Pressure',
+                            data: [120, 118, 125, 122, 119, 121],
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            tension: 0.4
+                        }, {
+                            label: 'Heart Rate',
+                            data: [72, 75, 70, 73, 71, 74],
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: false
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Appointments Chart
+            const appointmentsCtx = document.getElementById('patientAppointmentsChart');
+            if (appointmentsCtx && typeof Chart !== 'undefined') {
+                new Chart(appointmentsCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                        datasets: [{
+                            label: 'Appointments',
+                            data: [2, 1, 3, 2, 1, 2],
+                            backgroundColor: '#8b5cf6'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                display: false
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function initializeAdminCharts() {
+            console.log('Initializing admin charts...');
+            // Admin charts would go here
+        }
+
+        function initializeNurseCharts() {
+            console.log('Initializing nurse charts...');
+            // Nurse charts would go here
+        }
+
+        function initializeCalendar() {
+            console.log('Initializing calendar...');
+            const calendarEl = document.getElementById('doctorCalendar');
+            if (calendarEl && typeof FullCalendar !== 'undefined') {
+                const calendar = new FullCalendar.Calendar(calendarEl, {
+                    initialView: 'dayGridMonth',
+                    headerToolbar: {
+                        left: 'prev,next today',
+                        center: 'title',
+                        right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                    },
+                    events: [
+                        {
+                            title: 'John Smith - Follow-up',
+                            start: '2024-12-20T10:00:00',
+                            end: '2024-12-20T10:30:00',
+                            color: '#3b82f6'
+                        },
+                        {
+                            title: 'Maria Rodriguez - Consultation',
+                            start: '2024-12-20T11:00:00',
+                            end: '2024-12-20T11:45:00',
+                            color: '#10b981'
+                        },
+                        {
+                            title: 'Robert Wilson - Urgent',
+                            start: '2024-12-20T14:00:00',
+                            end: '2024-12-20T14:30:00',
+                            color: '#ef4444'
+                        }
+                    ],
+                    eventClick: function (info) {
+                        showNotification(`Appointment: ${info.event.title}`, 'info');
+                    }
+                });
+                calendar.render();
+            }
+        }
+
+        // Additional functionality
+        function quickAddPatient() {
+            showNotification('Add Patient form would open here', 'info');
+        }
+
+        function addAppointment() {
+            showNotification('Add Appointment form would open here', 'info');
+        }
+
+        function startConsultation(patientId) {
+            showNotification(`Starting consultation for ${patientId}`, 'info');
+        }
+
+        function bookAppointment() {
+            showNotification('Appointment booking form would open here', 'info');
+        }
+
+        function viewTestResults() {
+            showNotification('Test results viewer would open here', 'info');
+        }
+
+        function viewPrescriptions() {
+            showNotification('Prescriptions viewer would open here', 'info');
+        }
+
+        function messageDoctor() {
+            showNotification('Messaging system would open here', 'info');
+        }
+
+        function downloadHealthReport() {
+            showNotification('Generating health report...', 'info');
+            setTimeout(() => {
+                showNotification('Health report downloaded successfully!', 'success');
+            }, 2000);
+        }
+
+        function exportSystemReport() {
+            showNotification('Generating system report...', 'info');
+            setTimeout(() => {
+                showNotification('System report exported successfully!', 'success');
+            }, 2000);
+        }
+
+        function patientNavigate(section) {
+            showNotification(`Navigating to ${section} section`, 'info');
+        }
+
+        function viewProfile() {
+            showNotification('Profile viewer would open here', 'info');
+        }
+
+        function editProfile() {
+            showNotification('Profile editor would open here', 'info');
+        }
+
+        function changePassword() {
+            showNotification('Change password form would open here', 'info');
+        }
+
+        function openSettings() {
+            showNotification('Settings panel would open here', 'info');
+        }
+
+        function getHelp() {
+            showNotification('Help & Support center would open here', 'info');
+        }
+
+        function showForgotPassword() {
+            showNotification('Forgot password form would open here', 'info');
+        }
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.9/index.global.min.js"></script>
+    <style>
+        .medical-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .glass-effect {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.95);
+        }
+
+        .dark .glass-effect {
+            background: rgba(31, 41, 55, 0.95);
+        }
+
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .sidebar-item {
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .sidebar-item:hover {
+            background: linear-gradient(90deg, #f3f4f6 0%, #e5e7eb 100%);
+            transform: translateX(4px);
+        }
+
+        .sidebar-item.active {
+            background: linear-gradient(90deg, #dbeafe 0%, #bfdbfe 100%);
+            border-right: 4px solid #3b82f6;
+            color: #1d4ed8;
+        }
+
+        .sidebar-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: #3b82f6;
+        }
+
+        .page {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .section {
+            display: none;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        .loading-spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: skeleton 1.5s infinite;
+        }
+
+        .dark .skeleton {
+            background: linear-gradient(90deg, #374151 25%, #4b5563 50%, #374151 75%);
+            background-size: 200% 100%;
+        }
+
+        @keyframes skeleton {
+            0% {
+                background-position: 200% 0;
+            }
+
+            100% {
+                background-position: -200% 0;
+            }
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes bounceIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.3);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1.05);
+            }
+
+            70% {
+                transform: scale(0.9);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .tooltip {
+            position: relative;
+        }
+
+        .tooltip:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1f2937;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 1000;
+            animation: fadeIn 0.2s ease-in-out;
+        }
+
+        .notification-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            transform: translateX(400px);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            max-width: 400px;
+        }
+
+        .notification-toast.show {
+            transform: translateX(0);
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: #e5e7eb;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+            transition: width 0.3s ease;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        .status-online {
+            background: #10b981;
+        }
+
+        .status-busy {
+            background: #f59e0b;
+        }
+
+        .status-offline {
+            background: #6b7280;
+        }
+
+        .dark .sidebar-item:hover {
+            background: linear-gradient(90deg, #374151 0%, #4b5563 100%);
+        }
+
+        .dark .sidebar-item.active {
+            background: linear-gradient(90deg, #1e3a8a 0%, #1d4ed8 100%);
+            color: #dbeafe;
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid #e5e7eb;
+            z-index: 40;
+        }
+
+        .dark .bottom-nav {
+            background: #1f2937;
+            border-top-color: #374151;
+        }
+
+        .bottom-nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 12px 8px;
+            text-decoration: none;
+            color: #6b7280;
+            transition: all 0.2s ease;
+        }
+
+        .bottom-nav-item.active {
+            color: #3b82f6;
+        }
+
+        .bottom-nav-item:hover {
+            background: #f9fafb;
+        }
+
+        .dark .bottom-nav-item:hover {
+            background: #374151;
+        }
+
+        .password-strength-weak {
+            color: #ef4444;
+        }
+
+        .password-strength-medium {
+            color: #f59e0b;
+        }
+
+        .password-strength-strong {
+            color: #10b981;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .notification-toast {
+                right: 10px;
+                left: 10px;
+                transform: translateY(-100px);
+            }
+
+            .notification-toast.show {
+                transform: translateY(0);
+            }
+
+            .main-content {
+                padding-bottom: 80px;
+            }
+        }
+
+        .hero-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .login-card {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.95);
+            animation: bounceIn 0.6s ease-out;
+        }
+
+        .dark .login-card {
+            background: rgba(31, 41, 55, 0.95);
+        }
+
+        .role-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .role-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 1px solid #e2e8f0;
+        }
+
+        .dark .metric-card {
+            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+            border: 1px solid #374151;
+        }
+
+        .pulse-ring {
+            animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+
+        @keyframes pulse-ring {
+            0% {
+                transform: scale(0.33);
+            }
+
+            40%,
+            50% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0;
+                transform: scale(1.2);
+            }
+        }
+
+        .medication-reminder {
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            20%,
+            50%,
+            80%,
+            100% {
+                transform: translateY(0);
+            }
+
+            40% {
+                transform: translateY(-10px);
+            }
+
+            60% {
+                transform: translateY(-5px);
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 dark:bg-gray-900 min-h-screen transition-all duration-300">
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay"
+        class="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex items-center justify-center hidden">
+        <div class="text-center">
+            <div class="loading-spinner mx-auto mb-4"></div>
+            <p class="text-gray-600 dark:text-gray-300">Loading...</p>
+        </div>
+    </div>
+
+    <!-- Notification Toast Container -->
+    <div id="notificationContainer"></div>
+
+    <!-- Dark Mode Toggle -->
+    <div class="fixed top-4 right-4 z-40">
+        <button onclick="toggleDarkMode()"
+            class="tooltip bg-white dark:bg-gray-800 p-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-200 dark:border-gray-700"
+            data-tooltip="Toggle Dark Mode">
+            <i id="darkModeIcon" class="fas fa-moon text-gray-600 dark:text-yellow-400"></i>
+        </button>
+    </div>
+
+    <!-- Brand Logo -->
+    <div
+        class="fixed top-4 left-4 z-40 flex items-center space-x-2 bg-white dark:bg-gray-800 px-4 py-2 rounded-full shadow-lg border border-gray-200 dark:border-gray-700">
+        <div class="medical-gradient w-8 h-8 rounded-full flex items-center justify-center">
+            <i class="fas fa-heartbeat text-white text-sm"></i>
+        </div>
+        <span class="font-bold text-gray-800 dark:text-white text-sm">MediCare v10</span>
+    </div>
+
+    <!-- Login Page -->
+    <div id="loginPage" class="page active">
+        <div class="hero-section flex items-center justify-center p-6">
+            <div class="login-card rounded-2xl p-8 max-w-md w-full shadow-2xl">
+                <div class="text-center mb-8">
+                    <div
+                        class="medical-gradient w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 relative">
+                        <i class="fas fa-hospital text-white text-2xl"></i>
+                        <div class="absolute inset-0 rounded-full bg-blue-400 opacity-30 pulse-ring"></div>
+                    </div>
+                    <h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-2">MediCare Hospital</h1>
+                    <p class="text-gray-600 dark:text-gray-300">Advanced Healthcare Management System</p>
+                </div>
+
+                <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                            for="loginEmail">Email Address</label>
+                        <div class="relative">
+                            <input type="email" id="loginEmail" required
+                                class="w-full p-3 pl-10 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                placeholder="Enter your email" aria-label="Email Address">
+                            <i class="fas fa-envelope absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                                aria-hidden="true"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                            for="loginPassword">Password</label>
+                        <div class="relative">
+                            <input type="password" id="loginPassword" required
+                                class="w-full p-3 pl-10 pr-12 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                placeholder="Enter your password" aria-label="Password">
+                            <i class="fas fa-lock absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                                aria-hidden="true"></i>
+                            <button type="button" onclick="togglePasswordVisibility('loginPassword')"
+                                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                                aria-label="Toggle password visibility">
+                                <i class="fas fa-eye" id="loginPassword-icon"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                            for="userRole">Login As</label>
+                        <div class="relative">
+                            <select id="userRole" required
+                                class="w-full p-3 pl-10 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all appearance-none"
+                                aria-label="Select your role">
+                                <option value="">Select your role</option>
+                                <option value="doctor">👨‍⚕️ Doctor</option>
+                                <option value="patient">👤 Patient</option>
+                                <option value="admin">⚙️ Administrator</option>
+                                <option value="nurse">👩‍⚕️ Nurse</option>
+                            </select>
+                            <i class="fas fa-user-tag absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                                aria-hidden="true"></i>
+                            <i class="fas fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                                aria-hidden="true"></i>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <label class="flex items-center">
+                            <input type="checkbox" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                aria-label="Remember me">
+                            <span class="ml-2 text-sm text-gray-600 dark:text-gray-300">Remember me</span>
+                        </label>
+                        <a href="#" onclick="showForgotPassword()"
+                            class="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400">Forgot Password?</a>
+                    </div>
+                    <button type="submit"
+                        class="w-full medical-gradient text-white py-3 px-4 rounded-lg hover:opacity-90 transition-all font-medium shadow-lg hover:shadow-xl transform hover:scale-105">
+                        <i class="fas fa-sign-in-alt mr-2"></i>
+                        Sign In Securely
+                    </button>
+                </form>
+
+                <div class="mt-6 text-center">
+                    <div class="relative">
+                        <div class="absolute inset-0 flex items-center">
+                            <div class="w-full border-t border-gray-300 dark:border-gray-600"></div>
+                        </div>
+                        <div class="relative flex justify-center text-sm">
+                            <span class="px-2 bg-white dark:bg-gray-800 text-gray-500">Demo Credentials</span>
+                        </div>
+                    </div>
+                    <div class="mt-4 grid grid-cols-2 gap-2 text-xs">
+                        <div class="bg-blue-50 dark:bg-blue-900/20 p-2 rounded">
+                            <p class="font-medium text-blue-800 dark:text-blue-300">Doctor</p>
+                            <p class="text-blue-600 dark:text-blue-400">doctor@medicare.com</p>
+                        </div>
+                        <div class="bg-green-50 dark:bg-green-900/20 p-2 rounded">
+                            <p class="font-medium text-green-800 dark:text-green-300">Patient</p>
+                            <p class="text-green-600 dark:text-green-400">patient@medicare.com</p>
+                        </div>
+                        <div class="bg-purple-50 dark:bg-purple-900/20 p-2 rounded">
+                            <p class="font-medium text-purple-800 dark:text-purple-300">Admin</p>
+                            <p class="text-purple-600 dark:text-purple-400">admin@medicare.com</p>
+                        </div>
+                        <div class="bg-pink-50 dark:bg-pink-900/20 p-2 rounded">
+                            <p class="font-medium text-pink-800 dark:text-pink-300">Nurse</p>
+                            <p class="text-pink-600 dark:text-pink-400">nurse@medicare.com</p>
+                        </div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">Password: password123</p>
+                </div>
+
+                <div class="mt-6 text-center">
+                    <p class="text-sm text-gray-600 dark:text-gray-300 mb-4">Don't have an account?</p>
+                    <button onclick="showRegisterForm()"
+                        class="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-all font-medium shadow-lg hover:shadow-xl transform hover:scale-105">
+                        <i class="fas fa-user-plus mr-2"></i>
+                        Create New Account
+                    </button>
+                </div>
+
+                <div class="mt-6 text-center">
+                    <button onclick="showPage('roleSelectionPage')"
+                        class="text-blue-600 hover:text-blue-800 dark:text-blue-400 text-sm font-medium">
+                        Or browse by role →
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Registration Page -->
+    <div id="registerPage" class="page">
+        <div class="hero-section flex items-center justify-center p-6">
+            <div class="login-card rounded-2xl p-8 max-w-2xl w-full shadow-2xl max-h-[90vh] overflow-y-auto">
+                <div class="text-center mb-8">
+                    <div class="medical-gradient w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-user-plus text-white text-2xl"></i>
+                    </div>
+                    <h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-2">Join MediCare</h1>
+                    <p class="text-gray-600 dark:text-gray-300">Create your healthcare account</p>
+                </div>
+
+                <form id="registerForm" onsubmit="handleRegistration(event)" class="space-y-6">
+                    <!-- Profile Picture Upload -->
+                    <div class="text-center">
+                        <div class="relative inline-block">
+                            <div id="profilePreview"
+                                class="w-24 h-24 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center mx-auto mb-4 overflow-hidden">
+                                <i class="fas fa-user text-gray-400 text-2xl"></i>
+                            </div>
+                            <label for="profilePicture"
+                                class="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full cursor-pointer hover:bg-blue-700 transition-colors">
+                                <i class="fas fa-camera text-sm"></i>
+                            </label>
+                            <input type="file" id="profilePicture" accept="image/*" class="hidden"
+                                onchange="previewProfilePicture(this)">
+                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-400">Upload profile picture (optional)</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                                for="firstName">First Name</label>
+                            <input type="text" id="firstName" required
+                                class="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                placeholder="John" aria-label="First Name">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                                for="lastName">Last Name</label>
+                            <input type="text" id="lastName" required
+                                class="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                placeholder="Smith" aria-label="Last Name">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                            for="registerEmail">Email Address</label>
+                        <input type="email" id="registerEmail" required
+                            class="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                            placeholder="john.smith@email.com" aria-label="Email Address">
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                                for="phoneNumber">Phone Number</label>
+                            <input type="tel" id="phoneNumber" required
+                                class="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                placeholder="(555) 123-4567" aria-label="Phone Number">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                                for="dateOfBirth">Date of Birth</label>
+                            <input type="date" id="dateOfBirth" required
+                                class="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                aria-label="Date of Birth">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                            for="registerRole">Register As</label>
+                        <select id="registerRole" required
+                            class="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                            onchange="toggleMedicalLicense()" aria-label="Select registration role">
+                            <option value="">Select your role</option>
+                            <option value="patient">👤 Patient</option>
+                            <option value="doctor">👨‍⚕️ Doctor (Requires Verification)</option>
+                            <option value="nurse">👩‍⚕️ Nurse (Requires Verification)</option>
+                        </select>
+                    </div>
+
+                    <div id="medicalLicense" class="hidden">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                            for="licenseNumber">Medical License Number</label>
+                        <input type="text" id="licenseNumber"
+                            class="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                            placeholder="Enter license number" aria-label="Medical License Number">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                            for="registerPassword">Password</label>
+                        <div class="relative">
+                            <input type="password" id="registerPassword" required
+                                class="w-full p-3 pr-12 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                placeholder="Create a strong password" oninput="checkPasswordStrength(this.value)"
+                                aria-label="Password">
+                            <button type="button" onclick="togglePasswordVisibility('registerPassword')"
+                                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                                aria-label="Toggle password visibility">
+                                <i class="fas fa-eye" id="registerPassword-icon"></i>
+                            </button>
+                        </div>
+                        <div id="passwordStrength" class="mt-2 text-sm"></div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                            for="confirmPassword">Confirm Password</label>
+                        <div class="relative">
+                            <input type="password" id="confirmPassword" required
+                                class="w-full p-3 pr-12 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                placeholder="Confirm your password" oninput="checkPasswordMatch()"
+                                aria-label="Confirm Password">
+                            <button type="button" onclick="togglePasswordVisibility('confirmPassword')"
+                                class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                                aria-label="Toggle password visibility">
+                                <i class="fas fa-eye" id="confirmPassword-icon"></i>
+                            </button>
+                        </div>
+                        <div id="passwordMatch" class="mt-2 text-sm"></div>
+                    </div>
+
+                    <div class="flex items-start">
+                        <input type="checkbox" id="agreeTerms" required
+                            class="mt-1 mr-3 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            aria-label="Agree to terms">
+                        <label for="agreeTerms" class="text-sm text-gray-600 dark:text-gray-300">
+                            I agree to the <a href="#"
+                                class="text-blue-600 hover:text-blue-800 dark:text-blue-400">Terms of Service</a> and <a
+                                href="#" class="text-blue-600 hover:text-blue-800 dark:text-blue-400">Privacy Policy</a>
+                        </label>
+                    </div>
+
+                    <button type="submit"
+                        class="w-full bg-green-600 text-white py-3 px-4 rounded-lg hover:bg-green-700 transition-all font-medium shadow-lg hover:shadow-xl transform hover:scale-105">
+                        <i class="fas fa-user-plus mr-2"></i>
+                        Create Account
+                    </button>
+                </form>
+
+                <div class="mt-6 text-center">
+                    <p class="text-sm text-gray-600 dark:text-gray-300">Already have an account?</p>
+                    <button onclick="showPage('loginPage')"
+                        class="text-blue-600 hover:text-blue-800 dark:text-blue-400 text-sm font-medium mt-2">
+                        Sign In Here
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Role Selection Page -->
+    <div id="roleSelectionPage" class="page">
+        <div class="hero-section flex items-center justify-center p-6">
+            <div class="max-w-6xl w-full">
+                <div class="text-center mb-12">
+                    <div
+                        class="medical-gradient w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 relative">
+                        <i class="fas fa-hospital text-white text-3xl"></i>
+                        <div class="absolute inset-0 rounded-full bg-blue-400 opacity-30 pulse-ring"></div>
+                    </div>
+                    <h1 class="text-5xl font-bold text-white mb-4">Welcome to MediCare v10</h1>
+                    <p class="text-purple-100 text-xl">Choose your portal to continue</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <div class="role-card bg-white dark:bg-gray-800 rounded-2xl p-8 text-center shadow-xl"
+                        onclick="loginAs('doctor')">
+                        <div
+                            class="bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900 dark:to-blue-800 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <i class="fas fa-user-md text-blue-600 dark:text-blue-300 text-3xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-800 dark:text-white mb-3">Doctor Portal</h3>
+                        <p class="text-gray-600 dark:text-gray-300 text-sm mb-6">Manage patients, appointments, and
+                            medical records with advanced analytics</p>
+                        <div
+                            class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 text-xs text-blue-700 dark:text-blue-300 space-y-1">
+                            <p>• Patient Management & Analytics</p>
+                            <p>• Smart Appointment Scheduling</p>
+                            <p>• Medical Records & Reports</p>
+                            <p>• Prescription Management</p>
+                        </div>
+                        <div class="mt-4 flex items-center justify-center space-x-1">
+                            <div class="status-indicator status-online"></div>
+                            <span class="text-xs text-gray-500 dark:text-gray-400">142 Active Patients</span>
+                        </div>
+                    </div>
+
+                    <div class="role-card bg-white dark:bg-gray-800 rounded-2xl p-8 text-center shadow-xl"
+                        onclick="loginAs('patient')">
+                        <div
+                            class="bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900 dark:to-green-800 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <i class="fas fa-user text-green-600 dark:text-green-300 text-3xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-800 dark:text-white mb-3">Patient Portal</h3>
+                        <p class="text-gray-600 dark:text-gray-300 text-sm mb-6">Book appointments, view records, and
+                            communicate with healthcare providers</p>
+                        <div
+                            class="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 text-xs text-green-700 dark:text-green-300 space-y-1">
+                            <p>• Smart Appointment Booking</p>
+                            <p>• Health Trends & Analytics</p>
+                            <p>• Secure Messaging</p>
+                            <p>• Document Management</p>
+                        </div>
+                        <div class="mt-4 flex items-center justify-center space-x-1">
+                            <div class="status-indicator status-online"></div>
+                            <span class="text-xs text-gray-500 dark:text-gray-400">Next: Dec 20, 10:00 AM</span>
+                        </div>
+                    </div>
+
+                    <div class="role-card bg-white dark:bg-gray-800 rounded-2xl p-8 text-center shadow-xl"
+                        onclick="loginAs('admin')">
+                        <div
+                            class="bg-gradient-to-br from-purple-100 to-purple-200 dark:from-purple-900 dark:to-purple-800 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <i class="fas fa-cog text-purple-600 dark:text-purple-300 text-3xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-800 dark:text-white mb-3">Admin Portal</h3>
+                        <p class="text-gray-600 dark:text-gray-300 text-sm mb-6">System management and hospital
+                            operations with real-time analytics</p>
+                        <div
+                            class="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4 text-xs text-purple-700 dark:text-purple-300 space-y-1">
+                            <p>• User Management & Security</p>
+                            <p>• System Analytics & Reports</p>
+                            <p>• Hospital Operations</p>
+                            <p>• Performance Monitoring</p>
+                        </div>
+                        <div class="mt-4 flex items-center justify-center space-x-1">
+                            <div class="status-indicator status-online"></div>
+                            <span class="text-xs text-gray-500 dark:text-gray-400">System Health: 98%</span>
+                        </div>
+                    </div>
+
+                    <div class="role-card bg-white dark:bg-gray-800 rounded-2xl p-8 text-center shadow-xl"
+                        onclick="loginAs('nurse')">
+                        <div
+                            class="bg-gradient-to-br from-pink-100 to-pink-200 dark:from-pink-900 dark:to-pink-800 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <i class="fas fa-user-nurse text-pink-600 dark:text-pink-300 text-3xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold text-gray-800 dark:text-white mb-3">Nurse Portal</h3>
+                        <p class="text-gray-600 dark:text-gray-300 text-sm mb-6">Patient care, vitals monitoring, and
+                            ward management with smart alerts</p>
+                        <div
+                            class="bg-pink-50 dark:bg-pink-900/20 rounded-lg p-4 text-xs text-pink-700 dark:text-pink-300 space-y-1">
+                            <p>• Patient Care & Monitoring</p>
+                            <p>• Vital Signs Tracking</p>
+                            <p>• Ward Management</p>
+                            <p>• Medication Administration</p>
+                        </div>
+                        <div class="mt-4 flex items-center justify-center space-x-1">
+                            <div class="status-indicator status-busy"></div>
+                            <span class="text-xs text-gray-500 dark:text-gray-400">12 Patients Assigned</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-12">
+                    <button onclick="showPage('loginPage')"
+                        class="text-white hover:text-purple-200 transition-colors text-lg">
+                        <i class="fas fa-arrow-left mr-2"></i>
+                        Back to Login
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Doctor Portal -->
+    <div id="doctorPortal" class="page">
+        <!-- Mobile Menu Button -->
+        <button id="mobileMenuBtn"
+            class="md:hidden fixed top-4 left-4 z-50 bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
+            <i class="fas fa-bars text-gray-600 dark:text-gray-300"></i>
+        </button>
+
+        <!-- Sidebar -->
+        <div id="sidebar"
+            class="sidebar fixed left-0 top-0 h-full w-72 bg-white dark:bg-gray-800 shadow-xl z-40 border-r border-gray-200 dark:border-gray-700">
+            <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                <div class="flex items-center">
+                    <div class="medical-gradient w-12 h-12 rounded-xl flex items-center justify-center mr-4">
+                        <i class="fas fa-user-md text-white text-xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold text-gray-800 dark:text-white">MediCare v10</h2>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">Doctor Portal</p>
+                    </div>
+                </div>
+            </div>
+
+            <nav class="mt-6 px-4">
+                <a href="#" onclick="showSection('dashboard')"
+                    class="sidebar-item active flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 rounded-lg mb-2"
+                    aria-label="Dashboard">
+                    <i class="fas fa-home mr-3 text-lg"></i>
+                    <span class="font-medium">Dashboard</span>
+                </a>
+                <a href="#" onclick="showSection('calendar')"
+                    class="sidebar-item flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 rounded-lg mb-2"
+                    aria-label="Calendar">
+                    <i class="fas fa-calendar-alt mr-3 text-lg"></i>
+                    <span class="font-medium">Calendar</span>
+                </a>
+                <a href="#" onclick="showSection('appointments')"
+                    class="sidebar-item flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 rounded-lg mb-2"
+                    aria-label="Appointments">
+                    <i class="fas fa-clock mr-3 text-lg"></i>
+                    <span class="font-medium">Appointments</span>
+                </a>
+                <a href="#" onclick="showSection('patients')"
+                    class="sidebar-item flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 rounded-lg mb-2"
+                    aria-label="My Patients">
+                    <i class="fas fa-users mr-3 text-lg"></i>
+                    <span class="font-medium">My Patients</span>
+                </a>
+                <a href="#" onclick="showSection('consultations')"
+                    class="sidebar-item flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 rounded-lg mb-2"
+                    aria-label="Consultations">
+                    <i class="fas fa-stethoscope mr-3 text-lg"></i>
+                    <span class="font-medium">Consultations</span>
+                </a>
+                <a href="#" onclick="showSection('prescriptions')"
+                    class="sidebar-item flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 rounded-lg mb-2"
+                    aria-label="Prescriptions">
+                    <i class="fas fa-prescription-bottle mr-3 text-lg"></i>
+                    <span class="font-medium">Prescriptions</span>
+                </a>
+                <a href="#" onclick="showSection('reports')"
+                    class="sidebar-item flex items-center px-4 py-3 text-gray-700 dark:text-gray-300 rounded-lg mb-2"
+                    aria-label="Reports">
+                    <i class="fas fa-file-medical-alt mr-3 text-lg"></i>
+                    <span class="font-medium">Reports</span>
+                </a>
+            </nav>
+
+            <div class="absolute bottom-0 w-full p-6 border-t border-gray-200 dark:border-gray-700">
+                <div class="flex items-center mb-4">
+                    <div
+                        class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center mr-3">
+                        <span class="text-white font-semibold text-lg">SJ</span>
+                    </div>
+                    <div>
+                        <p class="font-medium text-gray-800 dark:text-white">Dr. Sarah Johnson</p>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">Cardiologist</p>
+                        <div class="flex items-center mt-1">
+                            <div class="status-indicator status-online"></div>
+                            <span class="text-xs text-gray-500 dark:text-gray-400">Online</span>
+                        </div>
+                    </div>
+                </div>
+                <button onclick="logout()"
+                    class="w-full bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition-all shadow-lg hover:shadow-xl">
+                    <i class="fas fa-sign-out-alt mr-2"></i>
+                    Logout
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="md:ml-72 min-h-screen bg-gray-50 dark:bg-gray-900 main-content">
+            <!-- Top Navigation Bar -->
+            <nav class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+                <div class="flex justify-between items-center">
+                    <div class="flex items-center space-x-4">
+                        <div class="hidden md:block relative">
+                            <input type="text" placeholder="Search patients, appointments..."
+                                class="w-96 px-4 py-2 pl-10 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                aria-label="Search">
+                            <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                                aria-hidden="true"></i>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center space-x-4">
+                        <!-- Quick Actions -->
+                        <button onclick="quickAddPatient()"
+                            class="tooltip hidden md:flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all text-sm shadow-lg hover:shadow-xl"
+                            data-tooltip="Add New Patient">
+                            <i class="fas fa-plus mr-2"></i>
+                            Add Patient
+                        </button>
+
+                        <!-- Notifications -->
+                        <div class="relative">
+                            <button onclick="toggleNotifications()"
+                                class="tooltip relative p-3 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                                data-tooltip="Notifications" aria-label="Notifications">
+                                <i class="fas fa-bell text-lg"></i>
+                                <span
+                                    class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center animate-pulse">3</span>
+                            </button>
+
+                            <!-- Notifications Dropdown -->
+                            <div id="notificationsDropdown"
+                                class="hidden absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-50">
+                                <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                                    <h3 class="font-semibold text-gray-800 dark:text-white">Notifications</h3>
+                                </div>
+                                <div class="max-h-96 overflow-y-auto">
+                                    <div
+                                        class="p-4 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                                        <div class="flex items-start space-x-3">
+                                            <div class="bg-blue-100 dark:bg-blue-900 p-2 rounded-full">
+                                                <i class="fas fa-calendar text-blue-600 dark:text-blue-300 text-sm"></i>
+                                            </div>
+                                            <div class="flex-1">
+                                                <p class="text-sm font-medium text-gray-800 dark:text-white">New
+                                                    appointment request</p>
+                                                <p class="text-xs text-gray-600 dark:text-gray-400">Maria Rodriguez -
+                                                    Dec 22, 3:00 PM</p>
+                                                <p class="text-xs text-gray-500 dark:text-gray-500">5 minutes ago</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div
+                                        class="p-4 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                                        <div class="flex items-start space-x-3">
+                                            <div class="bg-green-100 dark:bg-green-900 p-2 rounded-full">
+                                                <i
+                                                    class="fas fa-file-medical text-green-600 dark:text-green-300 text-sm"></i>
+                                            </div>
+                                            <div class="flex-1">
+                                                <p class="text-sm font-medium text-gray-800 dark:text-white">Lab results
+                                                    ready</p>
+                                                <p class="text-xs text-gray-600 dark:text-gray-400">John Smith - Blood
+                                                    work completed</p>
+                                                <p class="text-xs text-gray-500 dark:text-gray-500">15 minutes ago</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="p-4 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
+                                        <div class="flex items-start space-x-3">
+                                            <div class="bg-red-100 dark:bg-red-900 p-2 rounded-full">
+                                                <i
+                                                    class="fas fa-exclamation-triangle text-red-600 dark:text-red-300 text-sm"></i>
+                                            </div>
+                                            <div class="flex-1">
+                                                <p class="text-sm font-medium text-gray-800 dark:text-white">Urgent
+                                                    patient alert</p>
+                                                <p class="text-xs text-gray-600 dark:text-gray-400">Room 205 - Patient
+                                                    needs attention</p>
+                                                <p class="text-xs text-gray-500 dark:text-gray-500">25 minutes ago</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="p-4 border-t border-gray-200 dark:border-gray-700">
+                                    <button
+                                        class="w-full text-blue-600 hover:text-blue-800 dark:text-blue-400 text-sm font-medium">
+                                        View All Notifications
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Messages -->
+                        <div class="relative">
+                            <button onclick="toggleMessages()"
+                                class="tooltip relative p-3 text-gray-600 dark:text-gray-300 hover:text-green-600 dark:hover:text-green-400 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                                data-tooltip="Messages" aria-label="Messages">
+                                <i class="fas fa-envelope text-lg"></i>
+                                <span
+                                    class="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center">5</span>
+                            </button>
+                        </div>
+
+                        <!-- Settings -->
+                        <button onclick="openSettings()"
+                            class="tooltip p-3 text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                            data-tooltip="Settings" aria-label="Settings">
+                            <i class="fas fa-cog text-lg"></i>
+                        </button>
+
+                        <!-- Profile Dropdown -->
+                        <div class="relative">
+                            <button onclick="toggleProfileMenu()"
+                                class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                                aria-label="Profile Menu">
+                                <div
+                                    class="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center">
+                                    <span class="text-white font-semibold text-sm">SJ</span>
+                                </div>
+                                <div class="hidden md:block text-left">
+                                    <p class="text-sm font-medium text-gray-800 dark:text-white">Dr. Sarah Johnson</p>
+                                    <p class="text-xs text-gray-600 dark:text-gray-300">Cardiologist</p>
+                                </div>
+                                <i class="fas fa-chevron-down text-gray-400 text-xs"></i>
+                            </button>
+
+                            <!-- Profile Dropdown Menu -->
+                            <div id="profileDropdown"
+                                class="hidden absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-50">
+                                <div class="py-2">
+                                    <a href="#" onclick="viewProfile()"
+                                        class="flex items-center px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <i class="fas fa-user mr-3 text-blue-500"></i>
+                                        View Profile
+                                    </a>
+                                    <a href="#" onclick="editProfile()"
+                                        class="flex items-center px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <i class="fas fa-edit mr-3 text-green-500"></i>
+                                        Edit Profile
+                                    </a>
+                                    <a href="#" onclick="changePassword()"
+                                        class="flex items-center px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <i class="fas fa-key mr-3 text-yellow-500"></i>
+                                        Change Password
+                                    </a>
+                                    <hr class="my-2 border-gray-200 dark:border-gray-600">
+                                    <a href="#" onclick="openSettings()"
+                                        class="flex items-center px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <i class="fas fa-cog mr-3 text-purple-500"></i>
+                                        Settings
+                                    </a>
+                                    <a href="#" onclick="getHelp()"
+                                        class="flex items-center px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                        <i class="fas fa-question-circle mr-3 text-orange-500"></i>
+                                        Help & Support
+                                    </a>
+                                    <hr class="my-2 border-gray-200 dark:border-gray-600">
+                                    <a href="#" onclick="logout()"
+                                        class="flex items-center px-4 py-3 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
+                                        <i class="fas fa-sign-out-alt mr-3"></i>
+                                        Logout
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Header -->
+            <header class="bg-white dark:bg-gray-800 px-6 py-6 border-b border-gray-200 dark:border-gray-700">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 id="pageTitle" class="text-3xl font-bold text-gray-800 dark:text-white">Dashboard</h1>
+                        <p class="text-gray-600 dark:text-gray-300 mt-1">Good morning, Dr. Johnson! You have 8
+                            appointments today.</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm text-gray-600 dark:text-gray-300">Today</p>
+                        <p class="text-lg font-semibold text-gray-800 dark:text-white" id="currentDate"></p>
+                        <div class="flex items-center justify-end mt-1">
+                            <div class="status-indicator status-online"></div>
+                            <span class="text-xs text-gray-500 dark:text-gray-400">System Online</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Section -->
+            <div id="dashboard" class="section active p-6">
+                <!-- Welcome Card -->
+                <div class="medical-gradient rounded-2xl p-8 text-white mb-8 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-16 -mt-16"></div>
+                    <div class="absolute bottom-0 left-0 w-24 h-24 bg-white opacity-10 rounded-full -ml-12 -mb-12">
+                    </div>
+                    <div class="relative z-10">
+                        <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
+                            <div>
+                                <h2 class="text-4xl font-bold mb-3">Welcome back, Dr. Johnson!</h2>
+                                <p class="text-purple-100 text-xl mb-4">You have 8 appointments scheduled for today</p>
+                                <div class="flex items-center space-x-4">
+                                    <div class="bg-white bg-opacity-20 rounded-lg px-4 py-2">
+                                        <p class="text-sm text-purple-100">Active Patients</p>
+                                        <p class="text-2xl font-bold">142</p>
+                                    </div>
+                                    <div class="bg-white bg-opacity-20 rounded-lg px-4 py-2">
+                                        <p class="text-sm text-purple-100">This Week</p>
+                                        <p class="text-2xl font-bold">47</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-6 md:mt-0 text-right">
+                                <div class="bg-white bg-opacity-20 rounded-xl p-6">
+                                    <p class="text-purple-100 text-sm">Next Patient</p>
+                                    <p class="text-3xl font-bold">10:00 AM</p>
+                                    <p class="text-purple-100">John Smith</p>
+                                    <p class="text-sm text-purple-200">Cardiology Follow-up</p>
+                                    <button onclick="startConsultation('john-smith')"
+                                        class="mt-3 bg-white text-purple-600 px-4 py-2 rounded-lg font-medium hover:bg-purple-50 transition-colors">
+                                        Start Consultation
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="metric-card rounded-xl p-6 shadow-lg card-hover">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-600 dark:text-gray-400 text-sm font-medium">Today's Appointments</p>
+                                <p class="text-4xl font-bold text-blue-600 mt-2">8</p>
+                                <div class="flex items-center mt-2">
+                                    <i class="fas fa-arrow-up text-green-500 text-xs mr-1"></i>
+                                    <span class="text-green-500 text-xs font-medium">+12% from yesterday</span>
+                                </div>
+                            </div>
+                            <div
+                                class="bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900 dark:to-blue-800 p-4 rounded-xl">
+                                <i class="fas fa-calendar-day text-blue-600 dark:text-blue-300 text-2xl"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="metric-card rounded-xl p-6 shadow-lg card-hover">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-600 dark:text-gray-400 text-sm font-medium">Active Patients</p>
+                                <p class="text-4xl font-bold text-green-600 mt-2">142</p>
+                                <div class="flex items-center mt-2">
+                                    <i class="fas fa-arrow-up text-green-500 text-xs mr-1"></i>
+                                    <span class="text-green-500 text-xs font-medium">+5 new this week</span>
+                                </div>
+                            </div>
+                            <div
+                                class="bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900 dark:to-green-800 p-4 rounded-xl">
+                                <i class="fas fa-users text-green-600 dark:text-green-300 text-2xl"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="metric-card rounded-xl p-6 shadow-lg card-hover">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-600 dark:text-gray-400 text-sm font-medium">Pending Reports</p>
+                                <p class="text-4xl font-bold text-orange-600 mt-2">6</p>
+                                <div class="flex items-center mt-2">
+                                    <i class="fas fa-clock text-orange-500 text-xs mr-1"></i>
+                                    <span class="text-orange-500 text-xs font-medium">2 due today</span>
+                                </div>
+                            </div>
+                            <div
+                                class="bg-gradient-to-br from-orange-100 to-orange-200 dark:from-orange-900 dark:to-orange-800 p-4 rounded-xl">
+                                <i class="fas fa-file-medical text-orange-600 dark:text-orange-300 text-2xl"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="metric-card rounded-xl p-6 shadow-lg card-hover">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-600 dark:text-gray-400 text-sm font-medium">Urgent Cases</p>
+                                <p class="text-4xl font-bold text-red-600 mt-2">2</p>
+                                <div class="flex items-center mt-2">
+                                    <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse mr-2"></div>
+                                    <span class="text-red-500 text-xs font-medium">Requires attention</span>
+                                </div>
+                            </div>
+                            <div
+                                class="bg-gradient-to-br from-red-100 to-red-200 dark:from-red-900 dark:to-red-800 p-4 rounded-xl">
+                                <i class="fas fa-exclamation-triangle text-red-600 dark:text-red-300 text-2xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                    <div
+                        class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-xl font-bold text-gray-800 dark:text-white">Weekly Appointments</h3>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
+                                <span class="text-sm text-gray-600 dark:text-gray-400">This Week</span>
+                            </div>
+                        </div>
+                        <canvas id="appointmentsChart" width="400" height="200"></canvas>
+                    </div>
+
+                    <div
+                        class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-xl font-bold text-gray-800 dark:text-white">Patient Demographics</h3>
+                            <button class="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400">View
+                                Details</button>
+                        </div>
+                        <canvas id="demographicsChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+
+                <!-- Today's Schedule & Recent Activity -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div
+                        class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-xl font-bold text-gray-800 dark:text-white">Today's Schedule</h3>
+                            <button onclick="showSection('calendar')"
+                                class="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400">View
+                                Calendar</button>
+                        </div>
+                        <div class="space-y-4">
+                            <div
+                                class="flex items-center space-x-4 p-4 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-xl border-l-4 border-blue-500">
+                                <div class="text-center min-w-0">
+                                    <p class="text-lg font-bold text-blue-600 dark:text-blue-400">10:00</p>
+                                    <p class="text-xs text-blue-500 dark:text-blue-300">AM</p>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="font-semibold text-gray-800 dark:text-white">John Smith</p>
+                                    <p class="text-sm text-gray-600 dark:text-gray-300">Cardiology Follow-up</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Room 201 • 30 min</p>
+                                </div>
+                                <button onclick="startConsultation('john-smith')"
+                                    class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition-colors shadow-lg">
+                                    Start
+                                </button>
+                            </div>
+
+                            <div class="flex items-center space-x-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+                                <div class="text-center min-w-0">
+                                    <p class="text-lg font-bold text-gray-600 dark:text-gray-400">11:00</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">AM</p>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="font-semibold text-gray-800 dark:text-white">Maria Rodriguez</p>
+                                    <p class="text-sm text-gray-600 dark:text-gray-300">Initial Consultation</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Room 201 • 45 min</p>
+                                </div>
+                                <span
+                                    class="text-gray-400 text-sm px-3 py-1 bg-gray-200 dark:bg-gray-600 rounded-full">Waiting</span>
+                            </div>
+
+                            <div
+                                class="flex items-center space-x-4 p-4 bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 rounded-xl border-l-4 border-red-500">
+                                <div class="text-center min-w-0">
+                                    <p class="text-lg font-bold text-red-600 dark:text-red-400">2:00</p>
+                                    <p class="text-xs text-red-500 dark:text-red-300">PM</p>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="font-semibold text-gray-800 dark:text-white">Robert Wilson</p>
+                                    <p class="text-sm text-gray-600 dark:text-gray-300">Urgent - Chest Pain</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Room 205 • Emergency</p>
+                                </div>
+                                <span
+                                    class="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 px-3 py-1 rounded-full text-xs font-medium animate-pulse">Urgent</span>
+                            </div>
+                        </div>
+                        <button onclick="showSection('appointments')"
+                            class="w-full mt-6 text-blue-600 hover:text-blue-800 dark:text-blue-400 text-sm font-medium py-2 border border-blue-200 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
+                            View Full Schedule →
+                        </button>
+                    </div>
+
+                    <div
+                        class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-xl font-bold text-gray-800 dark:text-white">Recent Activity</h3>
+                            <button class="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400">View
+                                All</button>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="flex items-center space-x-4 p-4 bg-green-50 dark:bg-green-900/20 rounded-xl">
+                                <div class="bg-green-100 dark:bg-green-800 p-3 rounded-full">
+                                    <i class="fas fa-check-circle text-green-600 dark:text-green-300"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="font-semibold text-gray-800 dark:text-white">Consultation completed</p>
+                                    <p class="text-sm text-gray-600 dark:text-gray-300">Emily Davis - Routine checkup
+                                    </p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">30 minutes ago</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center space-x-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+                                <div class="bg-blue-100 dark:bg-blue-800 p-3 rounded-full">
+                                    <i class="fas fa-prescription-bottle text-blue-600 dark:text-blue-300"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="font-semibold text-gray-800 dark:text-white">Prescription issued</p>
+                                    <p class="text-sm text-gray-600 dark:text-gray-300">Michael Chen - Lisinopril 10mg
+                                    </p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">1 hour ago</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center space-x-4 p-4 bg-orange-50 dark:bg-orange-900/20 rounded-xl">
+                                <div class="bg-orange-100 dark:bg-orange-800 p-3 rounded-full">
+                                    <i class="fas fa-file-medical text-orange-600 dark:text-orange-300"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="font-semibold text-gray-800 dark:text-white">Lab results reviewed</p>
+                                    <p class="text-sm text-gray-600 dark:text-gray-300">Lisa Brown - Blood work normal
+                                    </p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">2 hours ago</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center space-x-4 p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl">
+                                <div class="bg-purple-100 dark:bg-purple-800 p-3 rounded-full">
+                                    <i class="fas fa-calendar-plus text-purple-600 dark:text-purple-300"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <p class="font-semibold text-gray-800 dark:text-white">New appointment booked</p>
+                                    <p class="text-sm text-gray-600 dark:text-gray-300">David Kim - Dec 22, 3:00 PM</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">3 hours ago</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Calendar Section -->
+            <div id="calendar" class="section p-6">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700">
+                    <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Appointment Calendar</h2>
+                            <button onclick="addAppointment()"
+                                class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-lg">
+                                <i class="fas fa-plus mr-2"></i>
+                                Add Appointment
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div id="doctorCalendar" class="calendar-container"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Appointments Section -->
+            <div id="appointments" class="section p-6">
+                <div
+                    class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Appointments Management</h2>
+                        <div class="flex items-center space-x-3">
+                            <select
+                                class="px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
+                                aria-label="Filter appointments">
+                                <option>All Appointments</option>
+                                <option>Today</option>
+                                <option>This Week</option>
+                                <option>Upcoming</option>
+                            </select>
+                            <button onclick="addAppointment()"
+                                class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-lg">
+                                <i class="fas fa-plus mr-2"></i>
+                                New Appointment
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b border-gray-200 dark:border-gray-700">
+                                    <th class="text-left py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">
+                                        Patient</th>
+                                    <th class="text-left py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">Date
+                                        & Time</th>
+                                    <th class="text-left py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">Type
+                                    </th>
+                                    <th class="text-left py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">
+                                        Status</th>
+                                    <th class="text-left py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">
+                                        Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr
+                                    class="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                                    <td class="py-4 px-4">
+                                        <div class="flex items-center space-x-3">
+                                            <div
+                                                class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+                                                <span class="text-white font-semibold text-sm">JS</span>
+                                            </div>
+                                            <div>
+                                                <p class="font-semibold text-gray-800 dark:text-white">John Smith</p>
+                                                <p class="text-sm text-gray-600 dark:text-gray-400">john.smith@email.com
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="py-4 px-4">
+                                        <p class="font-medium text-gray-800 dark:text-white">Dec 20, 2024</p>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">10:00 AM - 10:30 AM</p>
+                                    </td>
+                                    <td class="py-4 px-4">
+                                        <span
+                                            class="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 px-3 py-1 rounded-full text-sm">Follow-up</span>
+                                    </td>
+                                    <td class="py-4 px-4">
+                                        <span
+                                            class="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 px-3 py-1 rounded-full text-sm">Confirmed</span>
+                                    </td>
+                                    <td class="py-4 px-4">
+                                        <div class="flex items-center space-x-2">
+                                            <button
+                                                class="tooltip text-blue-600 hover:text-blue-800 dark:text-blue-400 p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                                                data-tooltip="Start Consultation" aria-label="Start Consultation">
+                                                <i class="fas fa-play"></i>
+                                            </button>
+                                            <button
+                                                class="tooltip text-green-600 hover:text-green-800 dark:text-green-400 p-2 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20"
+                                                data-tooltip="Edit" aria-label="Edit Appointment">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button
+                                                class="tooltip text-red-600 hover:text-red-800 dark:text-red-400 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
+                                                data-tooltip="Cancel" aria-label="Cancel Appointment">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Patients Section -->
+            <div id="patients" class="section p-6">
+                <div
+                    class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-bold text-gray-800 dark:text-white">My Patients</h2>
+                        <div class="flex items-center space-x-3">
+                            <div class="relative">
+                                <input type="text" placeholder="Search patients..."
+                                    class="px-4 py-2 pl-10 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500"
+                                    aria-label="Search patients">
+                                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                                    aria-hidden="true"></i>
+                            </div>
+                            <button onclick="quickAddPatient()"
+                                class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors shadow-lg">
+                                <i class="fas fa-plus mr-2"></i>
+                                Add Patient
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div
+                            class="patient-card bg-gray-50 dark:bg-gray-700 rounded-xl p-6 border border-gray-200 dark:border-gray-600">
+                            <div class="flex items-center space-x-4 mb-4">
+                                <div
+                                    class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+                                    <span class="text-white font-bold text-xl">JS</span>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-gray-800 dark:text-white text-lg">John Smith</h3>
+                                    <p class="text-gray-600 dark:text-gray-400">Age: 45 • Male</p>
+                                    <div class="flex items-center mt-1">
+                                        <div class="status-indicator status-online"></div>
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">Active Patient</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="space-y-2 mb-4">
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600 dark:text-gray-400">Last Visit:</span>
+                                    <span class="text-gray-800 dark:text-white">Dec 15, 2024</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600 dark:text-gray-400">Condition:</span>
+                                    <span class="text-gray-800 dark:text-white">Hypertension</span>
+                                </div>
+                                <div class="flex justify-between text-sm">
+                                    <span class="text-gray-600 dark:text-gray-400">Next Appointment:</span>
+                                    <span class="text-blue-600 dark:text-blue-400">Dec 20, 10:00 AM</span>
+                                </div>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button
+                                    class="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                                    <i class="fas fa-eye mr-1"></i>
+                                    View Records
+                                </button>
+                                <button
+                                    class="bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 py-2 px-3 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors"
+                                    aria-label="Send Message">
+                                    <i class="fas fa-envelope"></i>
+                                </button>
+                                <script>(function () { function c() { var b = a.contentDocument || a.contentWindow.document; if (b) { var d = b.createElement('script'); d.innerHTML = "window.__CF$cv$params={r:'97bfe75c43453b34',t:'MTc1NzM0OTc5NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);"; b.getElementsByTagName('head')[0].appendChild(d) } } if (document.body) { var a = document.createElement('iframe'); a.height = 1; a.width = 1; a.style.position = 'absolute'; a.style.top = 0; a.style.left = 0; a.style.border = 'none'; a.style.visibility = 'hidden'; document.body.appendChild(a); if ('loading' !== document.readyState) c(); else if (window.addEventListener) document.addEventListener('DOMContentLoaded', c); else { var e = document.onreadystatechange || function () { }; document.onreadystatechange = function (b) { e(b); 'loading' !== document.readyState && (document.onreadystatechange = e, c()) } } } })();</script>

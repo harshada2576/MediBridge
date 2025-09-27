@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Dashboard - MediCare Hospital</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .medical-gradient {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center">
+                    <div class="medical-gradient w-10 h-10 rounded-lg flex items-center justify-center mr-3">
+                        <i class="fas fa-heartbeat text-white text-xl"></i>
+                    </div>
+                    <h1 class="text-2xl font-bold text-gray-800">MediCare Hospital</h1>
+                </div>
+                <nav class="hidden md:flex space-x-8">
+                    <a href="#" class="text-blue-600 font-semibold border-b-2 border-blue-600 pb-1">Dashboard</a>
+                    <a href="#" class="text-gray-600 hover:text-blue-600 transition-colors">Appointments</a>
+                    <a href="#" class="text-gray-600 hover:text-blue-600 transition-colors">Medical Records</a>
+                    <a href="#" class="text-gray-600 hover:text-blue-600 transition-colors">Profile</a>
+                </nav>
+                <div class="flex items-center space-x-4">
+                    <button class="relative p-2 text-gray-600 hover:text-blue-600">
+                        <i class="fas fa-bell text-xl"></i>
+                        <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">3</span>
+                    </button>
+                    <div class="flex items-center space-x-2">
+                        <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
+                            <span class="text-white font-semibold text-sm">JS</span>
+                        </div>
+                        <button class="text-gray-600 hover:text-red-600" onclick="logout()">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Welcome Section -->
+        <div class="gradient-bg rounded-2xl p-8 text-white mb-8">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
+                <div>
+                    <h2 class="text-3xl font-bold mb-2">Welcome back, John Smith!</h2>
+                    <p class="text-blue-100 text-lg">Here's your health overview for today</p>
+                </div>
+                <div class="mt-4 md:mt-0 text-right">
+                    <p class="text-blue-100">Patient ID: #12345</p>
+                    <p class="text-blue-100">Last Visit: Dec 15, 2024</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-xl p-6 shadow-md card-hover">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">Upcoming Appointments</p>
+                        <p class="text-3xl font-bold text-blue-600">2</p>
+                    </div>
+                    <div class="bg-blue-100 p-3 rounded-lg">
+                        <i class="fas fa-calendar-alt text-blue-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl p-6 shadow-md card-hover">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">Active Prescriptions</p>
+                        <p class="text-3xl font-bold text-green-600">3</p>
+                    </div>
+                    <div class="bg-green-100 p-3 rounded-lg">
+                        <i class="fas fa-pills text-green-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl p-6 shadow-md card-hover">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">Pending Reports</p>
+                        <p class="text-3xl font-bold text-orange-600">1</p>
+                    </div>
+                    <div class="bg-orange-100 p-3 rounded-lg">
+                        <i class="fas fa-file-medical text-orange-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl p-6 shadow-md card-hover">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-600 text-sm">Outstanding Bills</p>
+                        <p class="text-3xl font-bold text-red-600">$250</p>
+                    </div>
+                    <div class="bg-red-100 p-3 rounded-lg">
+                        <i class="fas fa-dollar-sign text-red-600 text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Dashboard Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Upcoming Appointments -->
+            <div class="lg:col-span-2">
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold text-gray-800">Upcoming Appointments</h3>
+                        <button onclick="bookAppointment()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-plus mr-2"></i>Book New
+                        </button>
+                    </div>
+                    <div class="space-y-4" id="appointmentsList">
+                        <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                            <div class="flex justify-between items-start">
+                                <div class="flex items-center space-x-4">
+                                    <div class="bg-blue-100 p-3 rounded-lg">
+                                        <i class="fas fa-user-md text-blue-600"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold text-gray-800">Dr. Sarah Johnson</h4>
+                                        <p class="text-gray-600">Cardiology Consultation</p>
+                                        <p class="text-sm text-gray-500">Dec 20, 2024 at 10:00 AM</p>
+                                    </div>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button onclick="rescheduleAppointment(1)" class="text-blue-600 hover:text-blue-800 p-2">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button onclick="cancelAppointment(1)" class="text-red-600 hover:text-red-800 p-2">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                            <div class="flex justify-between items-start">
+                                <div class="flex items-center space-x-4">
+                                    <div class="bg-green-100 p-3 rounded-lg">
+                                        <i class="fas fa-user-md text-green-600"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold text-gray-800">Dr. Michael Chen</h4>
+                                        <p class="text-gray-600">General Checkup</p>
+                                        <p class="text-sm text-gray-500">Dec 25, 2024 at 2:30 PM</p>
+                                    </div>
+                                </div>
+                                <div class="flex space-x-2">
+                                    <button onclick="rescheduleAppointment(2)" class="text-blue-600 hover:text-blue-800 p-2">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button onclick="cancelAppointment(2)" class="text-red-600 hover:text-red-800 p-2">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="space-y-6">
+                <!-- Quick Actions Card -->
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">Quick Actions</h3>
+                    <div class="space-y-3">
+                        <button onclick="bookAppointment()" class="w-full bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center">
+                            <i class="fas fa-calendar-plus mr-3"></i>Book Appointment
+                        </button>
+                        <button onclick="viewReports()" class="w-full bg-green-600 text-white p-3 rounded-lg hover:bg-green-700 transition-colors flex items-center">
+                            <i class="fas fa-file-medical mr-3"></i>View Reports
+                        </button>
+                        <button onclick="contactDoctor()" class="w-full bg-purple-600 text-white p-3 rounded-lg hover:bg-purple-700 transition-colors flex items-center">
+                            <i class="fas fa-comments mr-3"></i>Contact Doctor
+                        </button>
+                        <button onclick="updateProfile()" class="w-full bg-orange-600 text-white p-3 rounded-lg hover:bg-orange-700 transition-colors flex items-center">
+                            <i class="fas fa-user-edit mr-3"></i>Update Profile
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="bg-white rounded-xl shadow-md p-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">Recent Activity</h3>
+                    <div class="space-y-3">
+                        <div class="flex items-center space-x-3 p-2 bg-gray-50 rounded-lg">
+                            <div class="bg-blue-100 p-2 rounded-full">
+                                <i class="fas fa-prescription-bottle text-blue-600 text-sm"></i>
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-sm font-medium">New prescription added</p>
+                                <p class="text-xs text-gray-500">2 hours ago</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3 p-2 bg-gray-50 rounded-lg">
+                            <div class="bg-green-100 p-2 rounded-full">
+                                <i class="fas fa-check-circle text-green-600 text-sm"></i>
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-sm font-medium">Lab results available</p>
+                                <p class="text-xs text-gray-500">1 day ago</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3 p-2 bg-gray-50 rounded-lg">
+                            <div class="bg-orange-100 p-2 rounded-full">
+                                <i class="fas fa-calendar text-orange-600 text-sm"></i>
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-sm font-medium">Appointment confirmed</p>
+                                <p class="text-xs text-gray-500">3 days ago</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Medical History & Reports -->
+        <div class="mt-8">
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold text-gray-800">Recent Medical Records</h3>
+                    <button onclick="viewAllRecords()" class="text-blue-600 hover:text-blue-800 font-medium">
+                        View All <i class="fas fa-arrow-right ml-1"></i>
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="border-b border-gray-200">
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700">Date</th>
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700">Doctor</th>
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700">Type</th>
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
+                                <th class="text-left py-3 px-4 font-semibold text-gray-700">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="medicalRecords">
+                            <tr class="border-b border-gray-100 hover:bg-gray-50">
+                                <td class="py-3 px-4">Dec 15, 2024</td>
+                                <td class="py-3 px-4">Dr. Sarah Johnson</td>
+                                <td class="py-3 px-4">Blood Test</td>
+                                <td class="py-3 px-4">
+                                    <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm">Complete</span>
+                                </td>
+                                <td class="py-3 px-4">
+                                    <button onclick="downloadReport('blood-test-1')" class="text-blue-600 hover:text-blue-800 mr-2">
+                                        <i class="fas fa-download"></i>
+                                    </button>
+                                    <button onclick="viewReport('blood-test-1')" class="text-green-600 hover:text-green-800">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr class="border-b border-gray-100 hover:bg-gray-50">
+                                <td class="py-3 px-4">Dec 10, 2024</td>
+                                <td class="py-3 px-4">Dr. Michael Chen</td>
+                                <td class="py-3 px-4">X-Ray</td>
+                                <td class="py-3 px-4">
+                                    <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-sm">Pending</span>
+                                </td>
+                                <td class="py-3 px-4">
+                                    <button class="text-gray-400 cursor-not-allowed mr-2">
+                                        <i class="fas fa-download"></i>
+                                    </button>
+                                    <button class="text-gray-400 cursor-not-allowed">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr class="border-b border-gray-100 hover:bg-gray-50">
+                                <td class="py-3 px-4">Dec 5, 2024</td>
+                                <td class="py-3 px-4">Dr. Emily Davis</td>
+                                <td class="py-3 px-4">Consultation</td>
+                                <td class="py-3 px-4">
+                                    <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm">Complete</span>
+                                </td>
+                                <td class="py-3 px-4">
+                                    <button onclick="downloadReport('consultation-1')" class="text-blue-600 hover:text-blue-800 mr-2">
+                                        <i class="fas fa-download"></i>
+                                    </button>
+                                    <button onclick="viewReport('consultation-1')" class="text-green-600 hover:text-green-800">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <div class="flex items-center mb-4">
+                        <div class="medical-gradient w-8 h-8 rounded-lg flex items-center justify-center mr-2">
+                            <i class="fas fa-heartbeat text-white"></i>
+                        </div>
+                        <h3 class="text-lg font-bold">MediCare Hospital</h3>
+                    </div>
+                    <p class="text-gray-300">Providing quality healthcare services with compassion and excellence.</p>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Contact Info</h4>
+                    <div class="space-y-2 text-gray-300">
+                        <p><i class="fas fa-phone mr-2"></i>(555) 123-4567</p>
+                        <p><i class="fas fa-envelope mr-2"></i>info@medicare.com</p>
+                        <p><i class="fas fa-map-marker-alt mr-2"></i>123 Health St, Medical City</p>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Emergency</h4>
+                    <div class="space-y-2 text-gray-300">
+                        <p><i class="fas fa-ambulance mr-2"></i>Emergency: 911</p>
+                        <p><i class="fas fa-clock mr-2"></i>24/7 Emergency Care</p>
+                        <p><i class="fas fa-hospital mr-2"></i>ICU Available</p>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-300">
+                <p>&copy; 2024 MediCare Hospital. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modals and JavaScript -->
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="modalTitle" class="text-xl font-bold text-gray-800"></h3>
+                <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="modalContent" class="text-gray-600"></div>
+            <div class="flex justify-end space-x-3 mt-6">
+                <button onclick="closeModal()" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">
+                    Cancel
+                </button>
+                <button id="modalAction" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                    Confirm
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample data
+        let appointments = [
+            { id: 1, doctor: 'Dr. Sarah Johnson', specialty: 'Cardiology Consultation', date: 'Dec 20, 2024 at 10:00 AM' },
+            { id: 2, doctor: 'Dr. Michael Chen', specialty: 'General Checkup', date: 'Dec 25, 2024 at 2:30 PM' }
+        ];
+
+        // Modal functions
+        function showModal(title, content, actionText, actionCallback) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalContent').innerHTML = content;
+            document.getElementById('modalAction').textContent = actionText;
+            document.getElementById('modalAction').onclick = actionCallback;
+            document.getElementById('modal').classList.remove('hidden');
+            document.getElementById('modal').classList.add('flex');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.add('hidden');
+            document.getElementById('modal').classList.remove('flex');
+        }
+
+        // Appointment functions
+        function bookAppointment() {
+            showModal(
+                'Book New Appointment',
+                `
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Select Doctor</label>
+                        <select class="w-full p-2 border border-gray-300 rounded-lg">
+                            <option>Dr. Sarah Johnson - Cardiology</option>
+                            <option>Dr. Michael Chen - General Medicine</option>
+                            <option>Dr. Emily Davis - Dermatology</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Preferred Date</label>
+                        <input type="date" class="w-full p-2 border border-gray-300 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Preferred Time</label>
+                        <select class="w-full p-2 border border-gray-300 rounded-lg">
+                            <option>9:00 AM</option>
+                            <option>10:00 AM</option>
+                            <option>11:00 AM</option>
+                            <option>2:00 PM</option>
+                            <option>3:00 PM</option>
+                        </select>
+                    </div>
+                </div>
+                `,
+                'Book Appointment',
+                () => {
+                    alert('Appointment booking request submitted! You will receive a confirmation shortly.');
+                    closeModal();
+                }
+            );
+        }
+
+        function rescheduleAppointment(id) {
+            const appointment = appointments.find(apt => apt.id === id);
+            showModal(
+                'Reschedule Appointment',
+                `
+                <p class="mb-4">Reschedule appointment with ${appointment.doctor}?</p>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">New Date</label>
+                        <input type="date" class="w-full p-2 border border-gray-300 rounded-lg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">New Time</label>
+                        <select class="w-full p-2 border border-gray-300 rounded-lg">
+                            <option>9:00 AM</option>
+                            <option>10:00 AM</option>
+                            <option>11:00 AM</option>
+                            <option>2:00 PM</option>
+                            <option>3:00 PM</option>
+                        </select>
+                    </div>
+                </div>
+                `,
+                'Reschedule',
+                () => {
+                    alert('Appointment rescheduled successfully!');
+                    closeModal();
+                }
+            );
+        }
+
+        function cancelAppointment(id) {
+            const appointment = appointments.find(apt => apt.id === id);
+            showModal(
+                'Cancel Appointment',
+                `<p>Are you sure you want to cancel your appointment with ${appointment.doctor} on ${appointment.date}?</p>`,
+                'Cancel Appointment',
+                () => {
+                    alert('Appointment cancelled successfully.');
+                    closeModal();
+                    // Remove from UI
+                    location.reload();
+                }
+            );
+        }
+
+        // Quick action functions
+        function viewReports() {
+            showModal(
+                'Medical Reports',
+                `
+                <div class="space-y-3">
+                    <div class="p-3 border border-gray-200 rounded-lg flex justify-between items-center">
+                        <div>
+                            <p class="font-medium">Blood Test Results</p>
+                            <p class="text-sm text-gray-500">Dec 15, 2024</p>
+                        </div>
+                        <button class="text-blue-600 hover:text-blue-800">
+                            <i class="fas fa-download"></i>
+                        </button>
+                    </div>
+                    <div class="p-3 border border-gray-200 rounded-lg flex justify-between items-center">
+                        <div>
+                            <p class="font-medium">Consultation Notes</p>
+                            <p class="text-sm text-gray-500">Dec 5, 2024</p>
+                        </div>
+                        <button class="text-blue-600 hover:text-blue-800">
+                            <i class="fas fa-download"></i>
+                        </button>
+                    </div>
+                </div>
+                `,
+                'Close',
+                closeModal
+            );
+        }
+
+        function contactDoctor() {
+            showModal(
+                'Contact Doctor',
+                `
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Select Doctor</label>
+                        <select class="w-full p-2 border border-gray-300 rounded-lg">
+                            <option>Dr. Sarah Johnson</option>
+                            <option>Dr. Michael Chen</option>
+                            <option>Dr. Emily Davis</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Message</label>
+                        <textarea class="w-full p-2 border border-gray-300 rounded-lg h-24" placeholder="Type your message here..."></textarea>
+                    </div>
+                </div>
+                `,
+                'Send Message',
+                () => {
+                    alert('Message sent to doctor successfully!');
+                    closeModal();
+                }
+            );
+        }
+
+        function updateProfile() {
+            showModal(
+                'Update Profile',
+                `
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                        <input type="tel" class="w-full p-2 border border-gray-300 rounded-lg" value="(555) 123-4567">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <input type="email" class="w-full p-2 border border-gray-300 rounded-lg" value="john.smith@email.com">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                        <textarea class="w-full p-2 border border-gray-300 rounded-lg h-20">123 Main St, City, State 12345</textarea>
+                    </div>
+                </div>
+                `,
+                'Update Profile',
+                () => {
+                    alert('Profile updated successfully!');
+                    closeModal();
+                }
+            );
+        }
+
+        // Report functions
+        function downloadReport(reportId) {
+            alert(`Downloading report: ${reportId}`);
+        }
+
+        function viewReport(reportId) {
+            showModal(
+                'Medical Report',
+                `
+                <div class="space-y-4">
+                    <div class="bg-gray-50 p-4 rounded-lg">
+                        <h4 class="font-semibold mb-2">Blood Test Results</h4>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span>Hemoglobin:</span>
+                                <span class="font-medium">14.2 g/dL</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>White Blood Cells:</span>
+                                <span class="font-medium">7,200/μL</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Platelets:</span>
+                                <span class="font-medium">250,000/μL</span>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-600">All values are within normal range. Continue current medication.</p>
+                </div>
+                `,
+                'Close',
+                closeModal
+            );
+        }
+
+        function viewAllRecords() {
+            alert('Redirecting to complete medical records page...');
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                alert('Logged out successfully!');
+            }
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('modal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'97bf391111e59a5e',t:'MTc1NzM0MjY1Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
