@@ -1,7 +1,7 @@
-// backend/models/userModel.js - CORRECTED SUPABASE VERSION
+// backend/models/userModel.js - CORRECTED FINAL SUPABASE VERSION
 
 const supabase = require('../src/supabaseClient'); 
-// NOTE: The SQLite DB dependency is now permanently removed.
+// NOTE: The SQLite dependency is permanently removed.
 
 // Function to save user profile data to the 'profiles' table after successful sign-up in Auth.
 exports.createProfile = async (userId, name, role) => {
