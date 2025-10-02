@@ -290,3 +290,40 @@ function toggleNotifications() { /* Utility function */ }
 function toggleMessages() { /* Utility function */ }
 function toggleProfileMenu() { /* Utility function */ }
 // ... other portal specific actions (quickAddPatient, viewTestResults, etc.) ...
+// --- NEW FUNCTION: Patient Appointment Form Handler ---
+async function handlePatientAppointmentForm(event) {
+    event.preventDefault();
+    closeModal();
+    showLoading();
+
+    const form = event.target;
+    const date = form.querySelector('[name="date"]').value;
+    const time = form.querySelector('[name="time"]').value;
+    const doctorName = form.querySelector('[name="doctor"]').value;
+    const reason = form.querySelector('[name="reason"]').value;
+    const type = form.querySelector('[name="appointmentType"]:checked').value;
+
+    // NOTE: In a real application, you would need the actual UUID of the doctor (doctorId), 
+    // not just their name. For now, we'll use a placeholder UUID and pass the full date/time.
+    const appointmentDateTime = `${date}T${time}:00Z`;
+    const dummyDoctorId = "550e8400-e29b-41d4-a716-446655440000"; // Placeholder Doctor UUID
+
+    try {
+        const newAppointment = await createNewAppointment({
+            // patientId is automatically picked up from the JWT by the backend (correct security practice)
+            doctorId: dummyDoctorId, 
+            date: appointmentDateTime,
+            reason: `${type}: ${reason}` 
+        });
+
+        hideLoading();
+        showNotification(`Appointment confirmed with ${doctorName}! Status: ${newAppointment.status}`, 'success');
+        
+        // Refresh the page or the relevant section to show the new appointment
+        window.location.reload(); 
+
+    } catch (error) {
+        hideLoading();
+        showNotification('Failed to book appointment. Please try again.', 'error');
+    }
+}
