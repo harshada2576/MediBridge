@@ -44,8 +44,10 @@ document.addEventListener('DOMContentLoaded', function () {
     if (currentUser) {
         if (window.location.pathname.includes('patient-portal.html')) {
             renderPatientPortalHeader();
-        } else if (window.location.pathname.includes('-portal.html')) {
-            renderPortalHeader(); // Generic Doctor/Admin/Nurse portal logic
+        } else if (window.location.pathname.includes('doctor-portal.html')) {
+            renderPortalHeader();
+        } else if (window.location.pathname.includes('nurse-portal.html')) { // <-- NEW CHECK
+            renderNursePortalHeader();
         }
     }
 });
@@ -652,4 +654,387 @@ function renderPatientAppointments(appointments) {
         `;
         list.appendChild(item);
     });
+}
+// --- ADMIN PORTAL HANDLERS (Add these to app.js) ---
+
+// G.1: User Management Handler (Fetches ALL Users - Admin Privilege)
+async function manageUsers() {
+    showLoading();
+    try {
+        // Fetches ALL users (a privileged action assumed to be allowed for Admin role)
+        const users = await fetchAuthenticated('/users', 'GET');
+        hideLoading();
+        
+        showModal(
+            'System User Management',
+            renderUserTable(users), // Show users in a table
+            'Close', 
+            closeModal
+        );
+
+    } catch (error) {
+        hideLoading();
+        showNotification('Access denied or failed to load users.', 'error');
+    }
+}
+
+// G.1: Reports & Analytics Handler (Fetches ALL Records - Admin Privilege)
+async function viewReports() {
+    showLoading();
+    try {
+        // Fetches ALL records (Consultations, Prescriptions, etc.)
+        const records = await fetchAuthenticated('/records', 'GET');
+        hideLoading();
+        
+        showModal(
+            'System Reports & Analytics',
+            renderRecordsSummary(records), // Show records summary
+            'Close',
+            closeModal
+        );
+
+    } catch (error) {
+        hideLoading();
+        showNotification('Access denied or failed to load reports.', 'error');
+    }
+}
+
+// G.1: Utility function to render a user table for the modal
+function renderUserTable(users) {
+    let tableHtml = `
+        <p class="text-sm text-gray-600 mb-4">Total Users: ${users.length}</p>
+        <div class="overflow-x-auto max-h-80">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50 dark:bg-gray-700">
+                    <tr>
+                        <th class="py-2 px-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300">Name</th>
+                        <th class="py-2 px-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300">Email</th>
+                        <th class="py-2 px-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300">Role</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 dark:divide-gray-600">
+    `;
+
+    users.forEach(user => {
+        tableHtml += `
+            <tr class="hover:bg-gray-50 dark:hover:bg-gray-700">
+                <td class="py-2 px-4 whitespace-nowrap text-sm font-medium">${user.name}</td>
+                <td class="py-2 px-4 whitespace-nowrap text-sm">${user.email}</td>
+                <td class="py-2 px-4 whitespace-nowrap text-xs">
+                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${user.role === 'doctor' ? 'bg-blue-100 text-blue-800' : user.role === 'patient' ? 'bg-green-100 text-green-800' : 'bg-purple-100 text-purple-800'}">${user.role}</span>
+                </td>
+            </tr>
+        `;
+    });
+
+    tableHtml += `
+                </tbody>
+            </table>
+        </div>`;
+    return tableHtml;
+}
+
+// G.1: Utility function to render a records summary for the modal
+function renderRecordsSummary(records) {
+    const recordTypes = records.reduce((acc, record) => {
+        acc[record.record_type] = (acc[record.record_type] || 0) + 1;
+        return acc;
+    }, {});
+    
+    let summaryHtml = `
+        <p class="text-sm text-gray-600 mb-4">Total Records: ${records.length}</p>
+        <div class="space-y-3">
+    `;
+
+    for (const [type, count] of Object.entries(recordTypes)) {
+        summaryHtml += `
+            <div class="flex justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <span class="font-medium">${type}s</span>
+                <span class="font-bold text-lg">${count}</span>
+            </div>
+        `;
+    }
+
+    summaryHtml += `
+        </div>
+        <p class="text-xs text-gray-500 mt-4">Showing total count of all records (Consultations, Prescriptions, Reports).</p>
+    `;
+    return summaryHtml;
+}
+// --- NEW NURSE PORTAL RENDERING & TASK HANDLER (Add to app.js) ---
+
+// G.2: Task Completion Handler (Marks a record as 'Completed')
+async function completeTask(recordId) {
+    showLoading();
+
+    try {
+        const updates = { status: 'Completed' };
+        
+        // Use PUT endpoint to update the status of the record (Task/Vitals/Medication)
+        await fetchAuthenticated(`/records/${recordId}`, 'PUT', updates);
+
+        hideLoading();
+        showNotification('Task marked as complete!', 'success');
+        
+        // Refresh the nurse portal view after completion
+        // Note: For a real app, you'd update the DOM directly for a smoother experience.
+        window.location.reload(); 
+
+    } catch (error) {
+        hideLoading();
+        showNotification('Failed to complete task. Check API permissions.', 'error');
+    }
+}
+
+// G.2: Render Logic for Nurse Portal
+async function renderNursePortalHeader() {
+    // Update header name
+    const nameElements = document.querySelectorAll('.currentUser-name');
+    if (currentUser) {
+        nameElements.forEach(el => {
+             el.textContent = `Welcome, Nurse ${currentUser.name.split(' ').pop()}!`;
+        });
+    }
+
+    // Fetch all necessary data (for now, fetching all records for tasks)
+    const records = await fetchRecordsForUser();
+    
+    renderNurseTasks(records);
+    // You would add renderVitalsSummary(records) here to fill quick stats
+}
+
+// G.2: Renders the list of active tasks for the nurse
+function renderNurseTasks(records) {
+    const list = document.getElementById('nurseTaskList');
+    if (!list) return;
+
+    // Filter for open tasks (e.g., specific record types that function as tasks)
+    const openTasks = records.filter(r => 
+        (r.record_type.includes('Vitals') || r.record_type.includes('Medication')) && r.status !== 'Completed'
+    );
+    
+    list.innerHTML = ''; 
+
+    if (openTasks.length === 0) {
+        list.innerHTML = '<p class="text-gray-500 p-4 text-sm">No pending patient care tasks for this shift.</p>';
+        return;
+    }
+
+    openTasks.forEach(task => {
+        const patientName = task.patient ? task.patient.name : 'Unknown Patient';
+        const isMedication = task.record_type === 'Medication';
+        const isUrgent = task.title.includes('Urgent');
+
+        const colorClass = isUrgent ? 'bg-red-50 border-red-500' : isMedication ? 'bg-blue-50 border-blue-500' : 'bg-gray-50 border-gray-300';
+        const icon = isMedication ? 'fas fa-pills' : 'fas fa-heartbeat';
+        
+        const item = document.createElement('div');
+        item.className = `flex items-center space-x-3 p-4 ${colorClass} rounded-xl border-l-4`;
+        item.innerHTML = `
+            <input type="checkbox" class="rounded" onclick="completeTask('${task.id}')">
+            <div class="flex-1">
+                <p class="font-medium text-gray-800 dark:text-white">${task.title}</p>
+                <p class="text-sm text-gray-600 dark:text-gray-300">${patientName} - Room 201</p>
+                <p class="text-xs text-red-600 dark:text-red-400">${isUrgent ? 'URGENT ATTENTION' : 'Due: 11:00 AM'}</p>
+            </div>
+            <i class="${icon} text-xl text-gray-400"></i>
+        `;
+        list.appendChild(item);
+    });
+}
+// --- NEW DOCTOR PATIENT FETCHING LOGIC (Add to app.js) ---
+
+// G.3: Fetches all users, filters them down to patients.
+async function fetchPatients() {
+    try {
+        // NOTE: This route fetches ALL users (patients, doctors, admins).
+        // It relies on RLS/Backend authorization to only return profiles
+        // the current user (doctor/admin) is allowed to see.
+        const allUsers = await fetchAuthenticated('/users', 'GET');
+        
+        // Client-side filter: only show those explicitly tagged as 'patient'
+        const patients = allUsers.filter(user => user.role === 'patient');
+        return patients;
+
+    } catch (error) {
+        showNotification('Failed to load patient list.', 'error');
+        return [];
+    }
+}
+
+// G.3: Renders the patient cards in the Doctor Portal
+function renderDoctorPatients(patients) {
+    const grid = document.getElementById('patientCardsGrid');
+    if (!grid) return;
+
+    grid.innerHTML = '';
+
+    if (patients.length === 0) {
+        grid.innerHTML = '<p class="text-gray-500 p-4">No active patients assigned to your profile.</p>';
+        return;
+    }
+
+    patients.forEach(patient => {
+        // Simulate patient details (Age, Condition) as this isn't stored in the basic 'users' table
+        const age = Math.floor(Math.random() * (75 - 25 + 1)) + 25; 
+        const condition = ['Hypertension', 'Diabetes', 'Cardiac Checkup', 'Routine Care'][Math.floor(Math.random() * 4)];
+        const initials = patient.name.split(' ').map(n => n[0]).join('');
+
+        const card = document.createElement('div');
+        card.className = 'patient-card bg-gray-50 dark:bg-gray-700 rounded-xl p-6 border border-gray-200 dark:border-gray-600';
+        card.innerHTML = `
+            <div class="flex items-center space-x-4 mb-4">
+                <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+                    <span class="text-white font-bold text-xl">${initials}</span>
+                </div>
+                <div>
+                    <h3 class="font-bold text-gray-800 dark:text-white text-lg">${patient.name}</h3>
+                    <p class="text-gray-600 dark:text-gray-400">Age: ${age} • Role: Patient</p>
+                    <div class="flex items-center mt-1">
+                        <div class="status-indicator status-online"></div>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">Active Patient</span>
+                    </div>
+                </div>
+            </div>
+            <div class="space-y-2 mb-4">
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600 dark:text-gray-400">Condition:</span>
+                    <span class="text-gray-800 dark:text-white">${condition}</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600 dark:text-gray-400">Email:</span>
+                    <span class="text-gray-800 dark:text-white text-xs">${patient.email}</span>
+                </div>
+            </div>
+            <div class="flex space-x-2">
+                <button onclick="startConsultation('${patient.id}', '${patient.name}')" 
+                    class="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                    <i class="fas fa-stethoscope mr-1"></i> Consult
+                </button>
+                <button onclick="prescribeMedication('${patient.id}', '${patient.name}')"
+                    class="bg-purple-600 text-white py-2 px-3 rounded-lg hover:bg-purple-700 transition-colors text-sm">
+                    <i class="fas fa-pills"></i>
+                </button>
+            </div>
+        `;
+        grid.appendChild(card);
+    });
+}
+// --- MODIFIED FUNCTION IN frontend/js/app.js ---
+
+function renderPortalHeader() {
+    // ... (existing name update logic) ...
+    
+    if (currentUser.role === 'doctor') {
+        // Fetch Appointments for Dashboard
+        fetchAppointmentsForUser().then(appointments => {
+            renderTodaySchedule(appointments);
+            renderFullAppointments(appointments);
+        }).catch(err => console.error(err));
+        
+        // NEW: Fetch and Render Patients (for the Patients tab)
+        fetchPatients().then(patients => {
+            renderDoctorPatients(patients);
+        }).catch(err => console.error(err));
+    }
+    // ... (rest of the function) ...
+}
+// --- NEW DOCTOR PATIENT FETCHING LOGIC (Add this to app.js) ---
+
+// G.3: Fetches all users, filters them down to patients.
+async function fetchPatients() {
+    showLoading();
+    try {
+        // This relies on the protected /api/users endpoint.
+        const allUsers = await fetchAuthenticated('/users', 'GET');
+        hideLoading();
+        
+        // Client-side filter: only show those explicitly tagged as 'patient'
+        const patients = allUsers.filter(user => user.role === 'patient');
+        return patients;
+
+    } catch (error) {
+        hideLoading();
+        showNotification('Failed to load patient list. Check backend connectivity.', 'error');
+        return [];
+    }
+}
+
+// G.3: Renders the patient cards in the Doctor Portal's Patients tab
+function renderDoctorPatients(patients) {
+    const grid = document.getElementById('patientCardsGrid');
+    if (!grid) return;
+
+    grid.innerHTML = '';
+
+    if (patients.length === 0) {
+        grid.innerHTML = '<p class="text-gray-500 p-4">No active patients found in the system.</p>';
+        return;
+    }
+
+    patients.forEach(patient => {
+        // --- NOTE: Simulate dynamic clinical data for demonstration ---
+        const age = Math.floor(Math.random() * (75 - 25 + 1)) + 25; 
+        const condition = ['Hypertension', 'Diabetes', 'Routine Checkup', 'Cardiac Checkup'][Math.floor(Math.random() * 4)];
+        const initials = patient.name.split(' ').map(n => n[0]).join('');
+
+        const card = document.createElement('div');
+        card.className = 'patient-card bg-gray-50 dark:bg-gray-700 rounded-xl p-6 border border-gray-200 dark:border-gray-600';
+        card.innerHTML = `
+            <div class="flex items-center space-x-4 mb-4">
+                <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+                    <span class="text-white font-bold text-xl">${initials}</span>
+                </div>
+                <div>
+                    <h3 class="font-bold text-gray-800 dark:text-white text-lg">${patient.name}</h3>
+                    <p class="text-gray-600 dark:text-gray-400">Age: ${age} • Role: Patient</p>
+                    <div class="flex items-center mt-1">
+                        <div class="status-indicator status-online"></div>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">Active Patient</span>
+                    </div>
+                </div>
+            </div>
+            <div class="space-y-2 mb-4">
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600 dark:text-gray-400">Condition:</span>
+                    <span class="text-gray-800 dark:text-white">${condition}</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-600 dark:text-gray-400">Email:</span>
+                    <span class="text-gray-800 dark:text-white text-xs">${patient.email}</span>
+                </div>
+            </div>
+            <div class="flex space-x-2">
+                <button onclick="startConsultation('${patient.id}', '${patient.name}')" 
+                    class="flex-1 bg-blue-600 text-white py-2 px-3 rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                    <i class="fas fa-stethoscope mr-1"></i> Consult
+                </button>
+                <button onclick="prescribeMedication('${patient.id}', '${patient.name}')"
+                    class="bg-purple-600 text-white py-2 px-3 rounded-lg hover:bg-purple-700 transition-colors text-sm">
+                    <i class="fas fa-pills"></i>
+                </button>
+            </div>
+        `;
+        grid.appendChild(card);
+    });
+}
+
+// --- UPDATE CORE LOAD HOOK ---
+
+// ACTION: Find the existing renderPortalHeader function in app.js and ensure this call is added:
+function renderPortalHeader() {
+    // ... (existing name update logic) ...
+    
+    if (currentUser.role === 'doctor') {
+        // Fetch Appointments for Dashboard
+        fetchAppointmentsForUser().then(appointments => {
+            // ... (appointment rendering calls) ...
+        });
+        
+        // NEW: Fetch and Render Patients (called once on Doctor Portal load)
+        fetchPatients().then(patients => {
+            renderDoctorPatients(patients);
+        }).catch(err => console.error(err));
+    }
+    // ... (rest of the function) ...
 }

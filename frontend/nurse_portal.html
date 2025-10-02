@@ -67,6 +67,14 @@
 
 <body id="nursePortalBody" class="bg-gray-50 dark:bg-gray-900 min-h-screen transition-all duration-300">
     <div id="notificationContainer"></div>
+    <div id="loadingOverlay"
+        class="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex items-center justify-center hidden">
+        <div class="text-center">
+            <div class="loading-spinner mx-auto mb-4"></div>
+            <p class="text-gray-600 dark:text-gray-300">Loading...</p>
+        </div>
+    </div>
+
 
     <div id="nursePortal" class="page active">
         <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -79,7 +87,7 @@
                             </div>
                             <div>
                                 <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Nurse Portal</h1>
-                                <p class="text-sm text-gray-600 dark:text-gray-300">Welcome, Nurse Jennifer - Ward 3A</p>
+                                <p class="text-sm text-gray-600 dark:text-gray-300 currentUser-name">Welcome, Nurse Jennifer - Ward 3A</p>
                             </div>
                         </div>
                         <div class="flex items-center space-x-4">
@@ -172,36 +180,8 @@
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
                             <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-4">Today's Tasks</h3>
-                            <div class="space-y-4">
-                                <div
-                                    class="flex items-center space-x-3 p-4 bg-red-50 dark:bg-red-900/20 rounded-xl border-l-4 border-red-500">
-                                    <input type="checkbox" class="rounded">
-                                    <div class="flex-1">
-                                        <p class="font-medium text-gray-800 dark:text-white">Administer medication - Room 201</p>
-                                        <p class="text-sm text-gray-600 dark:text-gray-300">John Smith - Lisinopril 10mg</p>
-                                        <p class="text-xs text-red-600 dark:text-red-400">Due: 10:00 AM</p>
-                                    </div>
-                                </div>
-
-                                <div
-                                    class="flex items-center space-x-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border-l-4 border-blue-500">
-                                    <input type="checkbox" class="rounded">
-                                    <div class="flex-1">
-                                        <p class="font-medium text-gray-800 dark:text-white">Check vitals - Room 203</p>
-                                        <p class="text-sm text-gray-600 dark:text-gray-300">Maria Rodriguez</p>
-                                        <p class="text-xs text-blue-600 dark:text-blue-400">Due: 11:00 AM</p>
-                                    </div>
-                                </div>
-
-                                <div
-                                    class="flex items-center space-x-3 p-4 bg-green-50 dark:bg-green-900/20 rounded-xl border-l-4 border-green-500">
-                                    <input type="checkbox" class="rounded" checked>
-                                    <div class="flex-1">
-                                        <p class="font-medium text-gray-800 dark:text-white">Wound dressing - Room 205</p>
-                                        <p class="text-sm text-gray-600 dark:text-gray-300">Robert Wilson</p>
-                                        <p class="text-xs text-green-600 dark:text-green-400">Completed</p>
-                                    </div>
-                                </div>
+                            <div class="space-y-4" id="nurseTaskList">
+                                <p class="text-gray-500 p-4">Loading patient tasks...</p>
                             </div>
                         </div>
 
@@ -242,8 +222,7 @@
             </div>
             <div id="modalContent" class="text-gray-600"></div>
             <div class="flex justify-end space-x-3 mt-6">
-                <button onclick="closeModal()"
-                    class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">
+                <button onclick="closeModal()" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">
                     Close
                 </button>
                 <button id="modalAction" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
