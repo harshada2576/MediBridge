@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en" class="transition-all duration-300">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Role Selection - MediCare Hospital v10</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Tailwind config, including dark mode setup
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            500: '#3b82f6',
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-in-out',
+                        'bounce-in': 'bounceIn 0.6s ease-out',
+                        'pulse-ring': 'pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Essential styles kept for visual consistency (copied from f5.html) */
+        .medical-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .hero-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .role-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .role-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        .pulse-ring {
+            animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+        
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        .status-online { background: #10b981; }
+        .status-busy { background: #f59e0b; }
+        
+        @keyframes pulse-ring {
+            0% { transform: scale(0.33); }
+            40%, 50% { opacity: 1; }
+            100% { opacity: 0; transform: scale(1.2); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+
+<body id="roleSelectionBody" class="bg-gray-50 dark:bg-gray-900 min-h-screen transition-all duration-300">
+    <div id="notificationContainer"></div>
+
+    <div id="roleSelectionPage" class="hero-section flex items-center justify-center p-6">
+        <div class="max-w-6xl w-full">
+            <div class="text-center mb-12">
+                <div class="medical-gradient w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 relative">
+                    <i class="fas fa-hospital text-white text-3xl"></i>
+                    <div class="absolute inset-0 rounded-full bg-blue-400 opacity-30 pulse-ring"></div>
+                </div>
+                <h1 class="text-5xl font-bold text-white mb-4">Welcome to MediCare v10</h1>
+                <p class="text-purple-100 text-xl">Choose your portal to continue</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <div class="role-card bg-white dark:bg-gray-800 rounded-2xl p-8 text-center shadow-xl"
+                    onclick="loginAs('doctor')">
+                    <div
+                        class="bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900 dark:to-blue-800 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-user-md text-blue-600 dark:text-blue-300 text-3xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-800 dark:text-white mb-3">Doctor Portal</h3>
+                    <p class="text-gray-600 dark:text-gray-300 text-sm mb-6">Manage patients, appointments, and medical records with advanced analytics</p>
+                    <div
+                        class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 text-xs text-blue-700 dark:text-blue-300 space-y-1">
+                        <p>• Patient Management & Analytics</p>
+                        <p>• Smart Appointment Scheduling</p>
+                        <p>• Medical Records & Reports</p>
+                        <p>• Prescription Management</p>
+                    </div>
+                    <div class="mt-4 flex items-center justify-center space-x-1">
+                        <div class="status-indicator status-online"></div>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">142 Active Patients</span>
+                    </div>
+                </div>
+
+                <div class="role-card bg-white dark:bg-gray-800 rounded-2xl p-8 text-center shadow-xl"
+                    onclick="loginAs('patient')">
+                    <div
+                        class="bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900 dark:to-green-800 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-user text-green-600 dark:text-green-300 text-3xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-800 dark:text-white mb-3">Patient Portal</h3>
+                    <p class="text-gray-600 dark:text-gray-300 text-sm mb-6">Book appointments, view records, and communicate with healthcare providers</p>
+                    <div
+                        class="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 text-xs text-green-700 dark:text-green-300 space-y-1">
+                        <p>• Smart Appointment Booking</p>
+                        <p>• Health Trends & Analytics</p>
+                        <p>• Secure Messaging</p>
+                        <p>• Document Management</p>
+                    </div>
+                    <div class="mt-4 flex items-center justify-center space-x-1">
+                        <div class="status-indicator status-online"></div>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">Next: Dec 20, 10:00 AM</span>
+                    </div>
+                </div>
+
+                <div class="role-card bg-white dark:bg-gray-800 rounded-2xl p-8 text-center shadow-xl"
+                    onclick="loginAs('admin')">
+                    <div
+                        class="bg-gradient-to-br from-purple-100 to-purple-200 dark:from-purple-900 dark:to-purple-800 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-cog text-purple-600 dark:text-purple-300 text-3xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-800 dark:text-white mb-3">Admin Portal</h3>
+                    <p class="text-gray-600 dark:text-gray-300 text-sm mb-6">System management and hospital operations with real-time analytics</p>
+                    <div
+                        class="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4 text-xs text-purple-700 dark:text-purple-300 space-y-1">
+                        <p>• User Management & Security</p>
+                        <p>• System Analytics & Reports</p>
+                        <p>• Hospital Operations</p>
+                        <p>• Performance Monitoring</p>
+                    </div>
+                    <div class="mt-4 flex items-center justify-center space-x-1">
+                        <div class="status-indicator status-online"></div>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">System Health: 98%</span>
+                    </div>
+                </div>
+
+                <div class="role-card bg-white dark:bg-gray-800 rounded-2xl p-8 text-center shadow-xl"
+                    onclick="loginAs('nurse')">
+                    <div
+                        class="bg-gradient-to-br from-pink-100 to-pink-200 dark:from-pink-900 dark:to-pink-800 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-user-nurse text-pink-600 dark:text-pink-300 text-3xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-800 dark:text-white mb-3">Nurse Portal</h3>
+                    <p class="text-gray-600 dark:text-gray-300 text-sm mb-6">Patient care, vitals monitoring, and ward management with smart alerts</p>
+                    <div
+                        class="bg-pink-50 dark:bg-pink-900/20 rounded-lg p-4 text-xs text-pink-700 dark:text-pink-300 space-y-1">
+                        <p>• Patient Care & Monitoring</p>
+                        <p>• Vital Signs Tracking</p>
+                        <p>• Ward Management</p>
+                        <p>• Medication Administration</p>
+                    </div>
+                    <div class="mt-4 flex items-center justify-center space-x-1">
+                        <div class="status-indicator status-busy"></div>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">12 Patients Assigned</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center mt-12">
+                <button onclick="showPage('login.html')" class="text-white hover:text-purple-200 transition-colors text-lg">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Back to Login
+                </button>
+            </div>
+        </div>
+    </div>
+    <script src="js/app.js"></script>
+</body>
+
+</html>

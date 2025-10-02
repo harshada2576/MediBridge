@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en" class="transition-all duration-300">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Portal - MediCare Hospital v10</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Tailwind config, including dark mode setup
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            500: '#3b82f6',
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-in-out',
+                        'bounce-in': 'bounceIn 0.6s ease-out'
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
+    <style>
+        /* Essential styles kept for visual consistency (copied from f5.html) */
+        .medical-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+
+        .status-online {
+            background: #10b981;
+        }
+
+        .status-busy {
+            background: #f59e0b;
+        }
+    </style>
+</head>
+
+<body id="adminPortalBody" class="bg-gray-50 dark:bg-gray-900 min-h-screen transition-all duration-300">
+    <div id="notificationContainer"></div>
+
+    <div id="adminPortal" class="page active">
+        <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+            <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="flex justify-between items-center py-6">
+                        <div class="flex items-center">
+                            <div class="medical-gradient w-12 h-12 rounded-xl flex items-center justify-center mr-4">
+                                <i class="fas fa-cog text-white text-xl"></i>
+                            </div>
+                            <div>
+                                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Admin Portal</h1>
+                                <p class="text-sm text-gray-600 dark:text-gray-300">System Administration Dashboard</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <div class="flex items-center space-x-2 bg-green-100 dark:bg-green-900/30 px-3 py-2 rounded-lg">
+                                <div class="status-indicator status-online"></div>
+                                <span class="text-sm font-medium text-green-800 dark:text-green-300">System Online</span>
+                            </div>
+                            <button onclick="logout()"
+                                class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors shadow-lg">
+                                <i class="fas fa-sign-out-alt mr-2"></i>
+                                Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+                <div class="px-4 py-6 sm:px-0">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <div class="metric-card rounded-xl p-6 shadow-lg">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-600 dark:text-gray-400 text-sm font-medium">Total Users</p>
+                                    <p class="text-4xl font-bold text-blue-600 mt-2">1,247</p>
+                                    <div class="flex items-center mt-2">
+                                        <i class="fas fa-arrow-up text-green-500 text-xs mr-1"></i>
+                                        <span class="text-green-500 text-xs font-medium">+8.2% this month</span>
+                                    </div>
+                                </div>
+                                <div
+                                    class="bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900 dark:to-blue-800 p-4 rounded-xl">
+                                    <i class="fas fa-users text-blue-600 dark:text-blue-300 text-2xl"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="metric-card rounded-xl p-6 shadow-lg">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-600 dark:text-gray-400 text-sm font-medium">Active Doctors</p>
+                                    <p class="text-4xl font-bold text-green-600 mt-2">45</p>
+                                    <div class="flex items-center mt-2">
+                                        <i class="fas fa-arrow-up text-green-500 text-xs mr-1"></i>
+                                        <span class="text-green-500 text-xs font-medium">+3 new this week</span>
+                                    </div>
+                                </div>
+                                <div
+                                    class="bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900 dark:to-green-800 p-4 rounded-xl">
+                                    <i class="fas fa-user-md text-green-600 dark:text-green-300 text-2xl"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="metric-card rounded-xl p-6 shadow-lg">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-600 dark:text-gray-400 text-sm font-medium">Today's Appointments</p>
+                                    <p class="text-4xl font-bold text-purple-600 mt-2">156</p>
+                                    <div class="flex items-center mt-2">
+                                        <i class="fas fa-clock text-orange-500 text-xs mr-1"></i>
+                                        <span class="text-orange-500 text-xs font-medium">12 pending</span>
+                                    </div>
+                                </div>
+                                <div
+                                    class="bg-gradient-to-br from-purple-100 to-purple-200 dark:from-purple-900 dark:to-purple-800 p-4 rounded-xl">
+                                    <i class="fas fa-calendar text-purple-600 dark:text-purple-300 text-2xl"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="metric-card rounded-xl p-6 shadow-lg">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-gray-600 dark:text-gray-400 text-sm font-medium">System Health</p>
+                                    <p class="text-4xl font-bold text-green-600 mt-2">98%</p>
+                                    <div class="flex items-center mt-2">
+                                        <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-2"></div>
+                                        <span class="text-green-500 text-xs font-medium">All systems operational</span>
+                                    </div>
+                                </div>
+                                <div
+                                    class="bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900 dark:to-green-800 p-4 rounded-xl">
+                                    <i class="fas fa-heartbeat text-green-600 dark:text-green-300 text-2xl"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <div
+                            class="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-lg card-hover cursor-pointer border border-gray-200 dark:border-gray-700"
+                            onclick="manageUsers()">
+                            <div class="text-center">
+                                <div
+                                    class="bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900 dark:to-blue-800 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <i class="fas fa-users-cog text-blue-600 dark:text-blue-300 text-3xl"></i>
+                                </div>
+                                <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-3">User Management</h3>
+                                <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">Manage doctors, patients, and staff accounts with advanced permissions</p>
+                                <div
+                                    class="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 text-xs text-blue-700 dark:text-blue-300">
+                                    <p>• Role-based access control</p>
+                                    <p>• Account verification</p>
+                                    <p>• Activity monitoring</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div
+                            class="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-lg card-hover cursor-pointer border border-gray-200 dark:border-gray-700"
+                            onclick="systemSettings()">
+                            <div class="text-center">
+                                <div
+                                    class="bg-gradient-to-br from-purple-100 to-purple-200 dark:from-purple-900 dark:to-purple-800 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <i class="fas fa-cogs text-purple-600 dark:text-purple-300 text-3xl"></i>
+                                </div>
+                                <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-3">System Settings</h3>
+                                <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">Configure system parameters, security settings, and preferences</p>
+                                <div
+                                    class="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-3 text-xs text-purple-700 dark:text-purple-300">
+                                    <p>• Security configuration</p>
+                                    <p>• System preferences</p>
+                                    <p>• Backup management</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div
+                            class="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-lg card-hover cursor-pointer border border-gray-200 dark:border-gray-700"
+                            onclick="viewReports()">
+                            <div class="text-center">
+                                <div
+                                    class="bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900 dark:to-green-800 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <i class="fas fa-chart-bar text-green-600 dark:text-green-300 text-3xl"></i>
+                                </div>
+                                <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-3">Reports & Analytics</h3>
+                                <p class="text-gray-600 dark:text-gray-400 text-sm mb-4">View comprehensive system reports and performance analytics</p>
+                                <div
+                                    class="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 text-xs text-green-700 dark:text-green-300">
+                                    <p>• Performance metrics</p>
+                                    <p>• Usage statistics</p>
+                                    <p>• Custom reports</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-6 max-w-4xl w-full mx-4 max-h-96 overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="modalTitle" class="text-xl font-bold text-gray-800"></h3>
+                <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="modalContent" class="text-gray-600"></div>
+            <div class="flex justify-end space-x-3 mt-6">
+                <button onclick="closeModal()"
+                    class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">
+                    Close
+                </button>
+                <button id="modalAction" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                    Confirm
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en" class="transition-all duration-300">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Portal - MediCare Hospital v10</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Tailwind config, including dark mode setup
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            500: '#3b82f6',
+                        }
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-in-out',
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
+    <style>
+        /* Essential styles kept for visual consistency (copied from f5.html) */
+        .medical-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+    </style>
+</head>
+
+<body id="patientPortalBody" class="bg-gray-50 dark:bg-gray-900 min-h-screen transition-all duration-300">
+    <div id="notificationContainer"></div>
+
+    <div id="patientPortal" class="page active">
+        <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+            <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="flex justify-between items-center py-6">
+                        <div class="flex items-center">
+                            <div class="medical-gradient w-12 h-12 rounded-xl flex items-center justify-center mr-4">
+                                <i class="fas fa-user text-white text-xl"></i>
+                            </div>
+                            <div>
+                                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Patient Portal</h1>
+                                <p class="text-sm text-gray-600 dark:text-gray-300">Welcome back, John Smith</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <button onclick="toggleNotifications()"
+                                class="tooltip relative p-3 text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                                data-tooltip="Notifications">
+                                <i class="fas fa-bell text-lg"></i>
+                                <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">2</span>
+                            </button>
+                            <button onclick="logout()"
+                                class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors shadow-lg">
+                                <i class="fas fa-sign-out-alt mr-2"></i>
+                                Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+                <div class="px-4 py-6 sm:px-0">
+                    <div class="medical-gradient rounded-2xl p-8 text-white mb-8 relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -mr-16 -mt-16"></div>
+                        <div class="relative z-10">
+                            <h2 class="text-3xl font-bold mb-3">Welcome back, John!</h2>
+                            <p class="text-purple-100 text-lg mb-4">Your next appointment is on December 20, 2024 at 10:00 AM</p>
+                            <div class="flex items-center space-x-4">
+                                <div class="bg-white bg-opacity-20 rounded-lg px-4 py-2">
+                                    <p class="text-sm text-purple-100">Health Score</p>
+                                    <p class="text-2xl font-bold">85/100</p>
+                                </div>
+                                <div class="bg-white bg-opacity-20 rounded-lg px-4 py-2">
+                                    <p class="text-sm text-purple-100">Last Visit</p>
+                                    <p class="text-lg font-semibold">Dec 15</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg card-hover cursor-pointer border border-gray-200 dark:border-gray-700"
+                            onclick="bookAppointment()">
+                            <div class="text-center">
+                                <div
+                                    class="bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-900 dark:to-blue-800 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <i class="fas fa-calendar-plus text-blue-600 dark:text-blue-300 text-2xl"></i>
+                                </div>
+                                <h3 class="font-bold text-gray-800 dark:text-white text-lg">Book Appointment</h3>
+                                <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">Schedule a new visit with your doctor</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg card-hover cursor-pointer border border-gray-200 dark:border-gray-700"
+                            onclick="viewTestResults()">
+                            <div class="text-center">
+                                <div
+                                    class="bg-gradient-to-br from-green-100 to-green-200 dark:from-green-900 dark:to-green-800 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <i class="fas fa-file-medical text-green-600 dark:text-green-300 text-2xl"></i>
+                                </div>
+                                <h3 class="font-bold text-gray-800 dark:text-white text-lg">Test Results</h3>
+                                <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">View your latest lab reports and results</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg card-hover cursor-pointer border border-gray-200 dark:border-gray-700"
+                            onclick="viewPrescriptions()">
+                            <div class="text-center">
+                                <div
+                                    class="bg-gradient-to-br from-purple-100 to-purple-200 dark:from-purple-900 dark:to-purple-800 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <i class="fas fa-pills text-purple-600 dark:text-purple-300 text-2xl"></i>
+                                </div>
+                                <h3 class="font-bold text-gray-800 dark:text-white text-lg">Prescriptions</h3>
+                                <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">Manage your current medications</p>
+                            </div>
+                        </div>
+
+                        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg card-hover cursor-pointer border border-gray-200 dark:border-gray-700"
+                            onclick="messageDoctor()">
+                            <div class="text-center">
+                                <div
+                                    class="bg-gradient-to-br from-orange-100 to-orange-200 dark:from-orange-900 dark:to-orange-800 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <i class="fas fa-comments text-orange-600 dark:text-orange-300 text-2xl"></i>
+                                </div>
+                                <h3 class="font-bold text-gray-800 dark:text-white text-lg">Message Doctor</h3>
+                                <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">Send a secure message to your healthcare team</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+                            <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-4">Health Trends</h3>
+                            <canvas id="patientHealthChart" width="400" height="200"></canvas>
+                        </div>
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+                            <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-4">Appointment History</h3>
+                            <canvas id="patientAppointmentsChart" width="400" height="200"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+                            <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-4">Upcoming Appointments</h3>
+                            <div class="space-y-4">
+                                <div class="border-l-4 border-blue-500 pl-4 py-3 bg-blue-50 dark:bg-blue-900/20 rounded-r-lg">
+                                    <p class="font-semibold text-gray-800 dark:text-white">Dr. Sarah Johnson</p>
+                                    <p class="text-sm text-gray-600 dark:text-gray-300">Cardiology Follow-up</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Dec 20, 2024 at 10:00 AM</p>
+                                </div>
+                                <div class="border-l-4 border-green-500 pl-4 py-3 bg-green-50 dark:bg-green-900/20 rounded-r-lg">
+                                    <p class="font-semibold text-gray-800 dark:text-white">Dr. Michael Chen</p>
+                                    <p class="text-sm text-gray-600 dark:text-gray-300">Annual Physical</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Jan 15, 2025 at 2:00 PM</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-200 dark:border-gray-700">
+                            <h3 class="text-xl font-bold text-gray-800 dark:text-white mb-4">Recent Test Results</h3>
+                            <div class="space-y-4">
+                                <div class="flex justify-between items-center p-4 bg-green-50 dark:bg-green-900/20 rounded-xl">
+                                    <div>
+                                        <p class="font-semibold text-gray-800 dark:text-white">Blood Work</p>
+                                        <p class="text-sm text-gray-600 dark:text-gray-300">Dec 15, 2024</p>
+                                    </div>
+                                    <span
+                                        class="bg-green-100 dark:bg-green-800 text-green-800 dark:text-green-300 px-3 py-1 rounded-full text-sm font-medium">Normal</span>
+                                </div>
+                                <div class="flex justify-between items-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+                                    <div>
+                                        <p class="font-semibold text-gray-800 dark:text-white">ECG</p>
+                                        <p class="text-sm text-gray-600 dark:text-gray-300">Dec 10, 2024</p>
+                                    </div>
+                                    <span
+                                        class="bg-blue-100 dark:bg-blue-800 text-blue-800 dark:text-blue-300 px-3 py-1 rounded-full text-sm font-medium">Normal</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-6 max-w-4xl w-full mx-4 max-h-96 overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="modalTitle" class="text-xl font-bold text-gray-800"></h3>
+                <button onclick="closeModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="modalContent" class="text-gray-600"></div>
+            <div class="flex justify-end space-x-3 mt-6">
+                <button onclick="closeModal()"
+                    class="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">
+                    Close
+                </button>
+                <button id="modalAction" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                    Confirm
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+
+</html>
