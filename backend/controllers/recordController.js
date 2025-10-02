@@ -1,7 +1,6 @@
 // controllers/recordController.js
 
-const recordModel = require('../backend/models/recordModel');
-
+const appointmentModel = require('../models/recordModel'); 
 // POST /api/records
 exports.createRecord = async (req, res) => {
     try {

@@ -1,5 +1,4 @@
-const userModel = require('../models/userModel');
-
+const appointmentModel = require('../models/userModel'); 
 exports.getAllUsers = async (req, res) => {
   try {
     const users = await userModel.getAllUsers();

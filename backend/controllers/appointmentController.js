@@ -1,7 +1,6 @@
 // controllers/appointmentController.js
 
-const appointmentModel = require('../backend/models/appointmentModel');
-
+const appointmentModel = require('../models/appointmentModel'); 
 // POST /api/appointments (existing)
 exports.createAppointment = async (req, res) => {
     // ... (existing implementation) ...
