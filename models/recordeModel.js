@@ -1,24 +1,10 @@
-// models/recordModel.js
+// models/recordeModel.js
 
 const supabase = require('../src/supabaseClient'); 
 
-// NOTE: Before running Node, you must execute the SQL below in your Supabase console to create the table.
-/*
--- Recommended Supabase SQL Schema for Medical Records
-CREATE TABLE public.medical_records (
-    id SERIAL PRIMARY KEY,
-    patient_id uuid REFERENCES auth.users(id),
-    doctor_id uuid REFERENCES auth.users(id),
-    record_type TEXT NOT NULL CHECK (record_type IN ('Consultation', 'Prescription', 'Lab Report', 'X-Ray')),
-    record_date TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    title TEXT NOT NULL,
-    details JSONB, -- Stores structured data like symptoms, diagnosis, medication list, etc.
-    status TEXT DEFAULT 'Final'
-);
--- Remember to enable RLS (Row Level Security)!
-*/
+// NOTE: This model assumes the 'medical_records' table exists in Supabase.
 
-// Function to create a new medical record (Consultation or Prescription)
+// Function to create a new medical record (existing)
 exports.addRecord = async (patientId, doctorId, type, title, details) => {
     const { data, error } = await supabase
         .from('medical_records')
@@ -34,29 +20,25 @@ exports.addRecord = async (patientId, doctorId, type, title, details) => {
         .select();
 
     if (error) {
-        console.error('Error adding medical record:', error);
-        throw new Error(`Failed to create ${type} record.`);
+        throw new Error(`Failed to create ${type} record: ` + error.message);
     }
     return data[0];
 };
 
-// Function to get records based on user role
+// Function to get records based on user role (existing)
 exports.getRecordsByUser = async (userId, role, recordType) => {
-    // Select all fields, and join to get patient/doctor names
     let query = supabase.from('medical_records').select(`
         *,
         patient:patient_id (name),
         doctor:doctor_id (name)
     `);
-
-    // Filter by user role
+    
     if (role === 'patient') {
         query = query.eq('patient_id', userId);
     } else if (role === 'doctor') {
         query = query.eq('doctor_id', userId);
-    } 
+    }
 
-    // Optional: Filter by specific record type (e.g., ?type=Prescription)
     if (recordType) {
         query = query.eq('record_type', recordType);
     }
@@ -64,13 +46,26 @@ exports.getRecordsByUser = async (userId, role, recordType) => {
     const { data, error } = await query.order('record_date', { ascending: false });
 
     if (error) {
-        console.error('Error fetching medical records:', error);
-        throw new Error('Failed to retrieve medical records.');
+        throw new Error('Failed to retrieve medical records: ' + error.message);
     }
     return data;
 };
 
-// Function to update a record (e.g., changing status or details)
+// --- NEW FUNCTION: Get Single Record by ID (For Authorization Check) ---
+exports.getRecordById = async (recordId) => {
+    const { data, error } = await supabase
+        .from('medical_records')
+        .select('*')
+        .eq('id', recordId)
+        .single();
+        
+    if (error && error.code !== 'PGRST116') { 
+        throw new Error('Failed to retrieve medical record: ' + error.message);
+    }
+    return data;
+};
+
+// Function to update a record (existing)
 exports.updateRecord = async (recordId, updates) => {
     const { data, error } = await supabase
         .from('medical_records')
@@ -79,8 +74,20 @@ exports.updateRecord = async (recordId, updates) => {
         .select();
 
     if (error) {
-        console.error('Error updating record:', error);
-        throw new Error('Failed to update medical record.');
+        throw new Error('Failed to update medical record: ' + error.message);
     }
     return data[0];
+};
+
+// --- NEW FUNCTION: Delete Record ---
+exports.deleteRecord = async (recordId) => {
+    const { error } = await supabase
+        .from('medical_records')
+        .delete()
+        .eq('id', recordId);
+
+    if (error) {
+        throw new Error('Failed to delete medical record: ' + error.message);
+    }
+    return true; // Indicate success
 };

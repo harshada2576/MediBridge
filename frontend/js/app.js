@@ -23,7 +23,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const loginForm = document.getElementById('loginForm');
     if (loginForm) {
         loginForm.addEventListener('submit', handleLogin);
-        // Pre-fill login data if stored after registration
         const tempEmail = localStorage.getItem('tempLoginEmail');
         const tempRole = localStorage.getItem('tempLoginRole');
         if (tempEmail) document.getElementById('loginEmail').value = tempEmail;
@@ -35,7 +34,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const registerForm = document.getElementById('registerForm');
     if (registerForm) {
         registerForm.addEventListener('submit', handleRegistration);
-        // Attach live validation (placeholders: ensure these utility functions exist)
         const passInput = document.getElementById('registerPassword');
         const confirmInput = document.getElementById('confirmPassword');
         if (passInput) passInput.addEventListener('input', () => checkPasswordStrength(passInput.value));
@@ -46,7 +44,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (currentUser) {
         if (window.location.pathname.includes('patient-portal.html')) {
             renderPatientPortalHeader();
-        } else if (window.location.pathname.includes('doctor-portal.html')) {
+        } else if (window.location.pathname.includes('-portal.html')) {
             renderPortalHeader(); // Generic Doctor/Admin/Nurse portal logic
         }
     }
@@ -60,8 +58,9 @@ function loadAuthState() {
     if (user && token && role) {
         currentUser = JSON.parse(user);
         currentToken = token;
-        // Auto-redirect authenticated user if they land on login/register
-        if (window.location.pathname.includes('login.html') || window.location.pathname.includes('register.html')) {
+        if (window.location.pathname.includes('login.html') || 
+            window.location.pathname.includes('register.html') ||
+            window.location.pathname.includes('role-selection.html')) {
              redirectToPortal(role);
         }
     }
@@ -97,7 +96,6 @@ function redirectToPortal(role) {
     }
 }
 
-// Global page navigation (updated to use correct file names)
 function showPage(url) {
     window.location.href = url;
 }
@@ -254,7 +252,6 @@ async function fetchRecordsForUser() {
 async function createNewAppointment(appointmentData) {
     try {
         const response = await fetchAuthenticated('/appointments', 'POST', {
-            // Patient ID is implied from JWT on the backend
             doctorId: appointmentData.doctorId, 
             date: appointmentData.date,
             reason: appointmentData.reason
@@ -277,7 +274,6 @@ function renderPortalHeader() {
         nameElements.forEach(el => el.textContent = currentUser.name);
     }
     
-    // Fetch data and trigger rendering for the Doctor portal
     if (currentUser.role === 'doctor') {
         fetchAppointmentsForUser().then(appointments => {
             renderTodaySchedule(appointments);
@@ -286,48 +282,96 @@ function renderPortalHeader() {
     }
 }
 
-// PATIENT APPOINTMENT BOOKING HANDLER
-async function handlePatientAppointmentForm(event) {
-    // This is called from the bookAppointment() function defined in patient_portal.html
-    // The bookAppointment() function handles the form submission and validation.
+
+// --- DOCTOR PORTAL RENDERING (PLACEHOLDERS/UTILITIES) ---
+
+function renderTodaySchedule(appointments) { 
+    const list = document.getElementById('todaysScheduleList');
+    if (!list) return;
+
+    const today = new Date().toISOString().split('T')[0];
+    const todayAppointments = appointments.filter(a => a.appointment_date.startsWith(today));
     
-    // We are trusting the calling function (bookAppointment) has already called preventDefault and closeModal.
-    showLoading();
+    list.innerHTML = '';
 
-    const form = event.target;
-    const date = form.querySelector('[name="date"]').value;
-    const time = form.querySelector('[name="time"]').value;
-    const doctorName = form.querySelector('[name="doctor"]').value;
-    const reason = form.querySelector('[name="reason"]').value;
-    const type = form.querySelector('[name="appointmentType"]:checked').value;
-
-    const appointmentDateTime = `${date}T${time}:00Z`;
-    // NOTE: This MUST be a valid UUID present in your Supabase 'profiles' table for a doctor
-    const dummyDoctorId = "550e8400-e29b-41d4-a716-446655440000"; 
-
-    try {
-        const newAppointment = await createNewAppointment({
-            doctorId: dummyDoctorId, 
-            date: appointmentDateTime,
-            reason: `${type}: ${reason}` 
-        });
-
-        hideLoading();
-        showNotification(`Appointment confirmed with ${doctorName}!`, 'success');
-        
-        // Refresh page to show the new appointment in the upcoming list
-        window.location.reload(); 
-
-    } catch (error) {
-        hideLoading();
-        showNotification('Failed to book appointment. Check console for details.', 'error');
+    if (todayAppointments.length === 0) {
+        list.innerHTML = '<p class="text-gray-500 p-4">No appointments scheduled for today.</p>';
+        return;
     }
+
+    todayAppointments.forEach(apt => {
+        const patientName = apt.patient ? apt.patient.name : 'Unknown Patient';
+        const startTime = new Date(apt.appointment_date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+        
+        const isUrgent = apt.reason.toLowerCase().includes('urgent');
+        const colorClass = isUrgent ? 'from-red-50 to-red-100 border-red-500' : 'from-blue-50 to-blue-100 border-blue-500';
+        
+        const item = document.createElement('div');
+        item.className = `flex items-center space-x-4 p-4 bg-gradient-to-r ${colorClass} rounded-xl border-l-4`;
+        item.innerHTML = `
+            <div class="text-center min-w-0">
+                <p class="text-lg font-bold text-gray-800 dark:text-white">${startTime.split(' ')[0]}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">${startTime.split(' ')[1]}</p>
+            </div>
+            <div class="flex-1 min-w-0">
+                <p class="font-semibold text-gray-800 dark:text-white">${patientName}</p>
+                <p class="text-sm text-gray-600 dark:text-gray-300">${apt.reason}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Status: ${apt.status}</p>
+            </div>
+            <button onclick="startConsultation('${apt.patient_id}', '${patientName}')" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700">Start</button>
+        `;
+        list.appendChild(item);
+    });
 }
 
+function renderFullAppointments(appointments) {
+    const tableBody = document.getElementById('fullAppointmentsTableBody');
+    if (!tableBody) return;
 
-// PATIENT PORTAL RENDERING LOGIC
+    tableBody.innerHTML = '';
+
+    appointments.forEach(apt => {
+        const patientName = apt.patient ? apt.patient.name : 'Unknown Patient';
+        const date = new Date(apt.appointment_date).toLocaleDateString();
+        const time = new Date(apt.appointment_date).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+        
+        const statusClass = apt.status === 'Confirmed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800';
+
+        const row = document.createElement('tr');
+        row.className = 'border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors';
+        row.innerHTML = `
+            <td class="py-4 px-4">
+                <p class="font-semibold text-gray-800 dark:text-white">${patientName}</p>
+                <p class="text-sm text-gray-600 dark:text-gray-400">${apt.reason}</p>
+            </td>
+            <td class="py-4 px-4">
+                <p class="font-medium text-gray-800 dark:text-white">${date}</p>
+                <p class="text-sm text-gray-600 dark:text-gray-400">${time}</p>
+            </td>
+            <td class="py-4 px-4">
+                <span class="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 px-3 py-1 rounded-full text-sm">Consultation</span>
+            </td>
+            <td class="py-4 px-4">
+                <span class="${statusClass} px-3 py-1 rounded-full text-sm">${apt.status}</span>
+            </td>
+            <td class="py-4 px-4">
+                <div class="flex items-center space-x-2">
+                    <button class="tooltip text-blue-600 hover:text-blue-800 dark:text-blue-400 p-2 rounded-lg" onclick="startConsultation('${apt.patient_id}', '${patientName}')" data-tooltip="Start Consultation">
+                        <i class="fas fa-play"></i>
+                    </button>
+                    <button class="tooltip text-red-600 hover:text-red-800 dark:text-red-400 p-2 rounded-lg" onclick="cancelAppointment('${apt.id}')" data-tooltip="Cancel">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+        tableBody.appendChild(row);
+    });
+}
+
+// --- PATIENT PORTAL RENDERING LOGIC ---
+
 async function renderPatientPortalHeader() {
-    // 1. Update all instances of user name and welcome message
     const nameElements = document.querySelectorAll('.currentUser-name');
     if (currentUser) {
         nameElements.forEach(el => {
@@ -335,13 +379,11 @@ async function renderPatientPortalHeader() {
         });
     }
 
-    // 2. Fetch all necessary data concurrently
     const [appointments, records] = await Promise.all([
         fetchAppointmentsForUser(),
         fetchRecordsForUser()
     ]);
 
-    // 3. Render specific sections
     renderPatientAppointments(appointments);
     renderPatientRecords(records);
 }
@@ -417,7 +459,199 @@ function renderPatientRecords(records) {
     });
 }
 
+
+// --- DOCTOR PORTAL FORM HANDLERS (C.1 & C.2) ---
+
+// C.1: Consultation Form Handler
+async function handleConsultationForm(event) {
+    event.preventDefault();
+    closeModal();
+    showLoading();
+
+    const form = event.target;
+    const patientId = form.querySelector('[name="patientId"]').value;
+    const patientName = form.querySelector('[name="patientName"]').value;
+    const notes = form.querySelector('[name="notes"]').value;
+    const diagnosis = form.querySelector('[name="diagnosis"]').value;
+    const followUp = form.querySelector('[name="followUp"]').value;
+
+    if (!patientId || !notes) {
+        hideLoading();
+        showNotification('Consultation notes and patient ID are required.', 'error');
+        return;
+    }
+
+    try {
+        const recordData = {
+            patientId: patientId,
+            type: 'Consultation',
+            title: `Consultation with ${patientName}`,
+            details: {
+                notes: notes,
+                diagnosis: diagnosis,
+                follow_up_date: followUp
+            }
+        };
+
+        await fetchAuthenticated('/records', 'POST', recordData);
+
+        hideLoading();
+        showNotification(`Consultation record for ${patientName} saved successfully!`, 'success');
+        
+    } catch (error) {
+        hideLoading();
+        showNotification('Failed to save consultation record.', 'error');
+    }
+}
+
+// C.2: Prescription Form Handler
+async function handlePrescriptionForm(event) {
+    event.preventDefault();
+    closeModal();
+    showLoading();
+
+    const form = event.target;
+    const patientId = form.querySelector('[name="patientId"]').value;
+    const patientName = form.querySelector('[name="patientName"]').value;
+    const medication = form.querySelector('[name="medication"]').value;
+    const dosage = form.querySelector('[name="dosage"]').value;
+    const frequency = form.querySelector('[name="frequency"]').value;
+    const duration = form.querySelector('[name="duration"]').value;
+    const instructions = form.querySelector('[name="instructions"]').value;
+
+    if (!patientId || !medication || !dosage || !frequency) {
+        hideLoading();
+        showNotification('Medication, dosage, and patient ID are required.', 'error');
+        return;
+    }
+
+    try {
+        const recordData = {
+            patientId: patientId,
+            type: 'Prescription',
+            title: `${medication} (${dosage})`,
+            details: {
+                medication: medication,
+                dosage: dosage,
+                frequency: frequency,
+                duration: duration,
+                instructions: instructions
+            }
+        };
+
+        await fetchAuthenticated('/records', 'POST', recordData);
+
+        hideLoading();
+        showNotification(`Prescription for ${patientName} saved successfully!`, 'success');
+        
+    } catch (error) {
+        hideLoading();
+        showNotification('Failed to save prescription. Check API/console.', 'error');
+    }
+}
+
+// --- MODAL LAUNCHERS (Used by Doctor/Patient HTML) ---
+
+function startConsultation(patientId, patientName = 'Patient') {
+    showModal(
+        `Start Consultation: ${patientName}`,
+        `
+        <form id="consultationForm">
+            <input type="hidden" name="patientId" value="${patientId}">
+            <input type="hidden" name="patientName" value="${patientName}">
+
+            <div class="space-y-4">
+                <div class="bg-blue-50 dark:bg-gray-700 p-3 rounded-lg border border-blue-200 dark:border-gray-600">
+                    <p class="font-medium text-sm">Patient: ${patientName} (ID: ${patientId.substring(0, 8)}...)</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Consultation Notes *</label>
+                    <textarea name="notes" required class="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg h-32 focus:ring-2 focus:ring-blue-500" placeholder="Detailed notes on patient history and examination findings..."></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Diagnosis/Impression</label>
+                    <input type="text" name="diagnosis" class="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="e.g., Acute Bronchitis">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Follow-up Date</label>
+                    <input type="date" name="followUp" class="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
+        </form>
+        `,
+        'Save Consultation',
+        () => {
+             const form = document.getElementById('consultationForm');
+             if (form.checkValidity()) {
+                 handleConsultationForm({ preventDefault: () => {}, target: form });
+             } else {
+                 form.reportValidity();
+             }
+        }
+    );
+}
+
+function prescribeMedication(patientId = 'N/A', patientName = 'Unknown Patient') {
+    showModal(
+        `New Prescription for ${patientName}`,
+        `
+        <form id="prescriptionForm">
+            <input type="hidden" name="patientId" value="${patientId}">
+            <input type="hidden" name="patientName" value="${patientName}">
+
+            <div class="space-y-4">
+                <div class="bg-blue-50 dark:bg-gray-700 p-3 rounded-lg border border-blue-200 dark:border-gray-600">
+                    <p class="font-medium text-sm">Patient: ${patientName}</p>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Medication Name *</label>
+                    <input type="text" name="medication" required class="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="e.g., Lisinopril">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Dosage *</label>
+                        <input type="text" name="dosage" required class="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="e.g., 10mg">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Frequency *</label>
+                        <select name="frequency" required class="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="Once Daily">Once Daily</option>
+                            <option value="Twice Daily">Twice Daily</option>
+                            <option value="Three Times Daily">Three Times Daily</option>
+                            <option value="As Needed">As Needed</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Duration</label>
+                    <input type="text" name="duration" class="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500" placeholder="e.g., 30 days">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Special Instructions</label>
+                    <textarea name="instructions" class="w-full p-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg h-20 focus:ring-2 focus:ring-blue-500" placeholder="Take with food, do not crush, etc."></textarea>
+                </div>
+            </div>
+        </form>
+        `,
+        'Issue Prescription',
+        () => {
+             const form = document.getElementById('prescriptionForm');
+             if (form.checkValidity()) {
+                 handlePrescriptionForm({ preventDefault: () => {}, target: form });
+             } else {
+                 form.reportValidity();
+             }
+        }
+    );
+}
+
+
 // --- UTILITY PLACEHOLDERS (Ensure these match your HTML calls) ---
+
 function initializeDoctorCharts() { /* Chart.js logic */ }
 function initializePatientCharts() { /* Chart.js logic */ }
 function initializeAdminCharts() { /* Chart.js logic */ }
@@ -441,8 +675,36 @@ function togglePasswordVisibility(inputId) { /* Utility function */ }
 function toggleNotifications() { /* Utility function */ }
 function toggleMessages() { /* Utility function */ }
 function toggleProfileMenu() { /* Utility function */ }
-function closeModal() { 
+function showNotification(message, type) { /* Utility function */ }
+
+// NOTE: showModal function must be correctly defined, replace your existing placeholder if needed.
+function showModal(title, content, actionText, actionCallback) {
     const modal = document.getElementById('modal');
-    if (modal) modal.classList.add('hidden');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalContent = document.getElementById('modalContent');
+    const modalAction = document.getElementById('modalAction');
+
+    if (!modal) return;
+    
+    modalTitle.textContent = title;
+    modalContent.innerHTML = content;
+    modalAction.textContent = actionText;
+
+    // Remove old listeners and add the new one
+    // We clone to safely remove all previous listeners
+    const newModalAction = modalAction.cloneNode(true);
+    modalAction.parentNode.replaceChild(newModalAction, modalAction);
+
+    newModalAction.addEventListener('click', actionCallback);
+    
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
 }
-// Note: showModal is not defined here but is called by bookAppointment and relies on the modal HTML structure.
+
+// Additional utility functions called by HTML (placeholder implementation)
+function quickAddPatient() { showNotification('Add Patient form coming soon!', 'info'); }
+function cancelAppointment(aptId) { showNotification(`Appointment ${aptId} cancelled (API pending)!`, 'warning'); }
+function addAppointment() { showNotification('Add Appointment form coming soon!', 'info'); }
+function viewTestResults() { showNotification('Viewing Test Results (API pending)!', 'info'); }
+function viewPrescriptions() { showNotification('Viewing Prescriptions (API pending)!', 'info'); }
+function messageDoctor() { showNotification('Messaging system coming soon!', 'info'); }

@@ -72,3 +72,40 @@ exports.updateRecord = async (req, res) => {
         res.status(500).json({ error: 'Failed to update record: ' + err.message });
     }
 };
+// controllers/recordController.js
+
+const recordModel = require('../models/recordeModel');
+
+// ... (existing exports for createRecord, getRecords, updateRecord) ...
+
+// --- NEW FUNCTION: Delete Record ---
+// DELETE /api/records/:id
+exports.deleteRecord = async (req, res) => {
+    try {
+        const recordId = req.params.id;
+        const userId = req.userId;     // From JWT
+        const userRole = req.userRole; // From JWT
+
+        // 1. Authorization Check: Fetch record to check ownership/assignment
+        const record = await recordModel.getRecordById(recordId);
+
+        if (!record) {
+            return res.status(404).json({ message: 'Medical record not found.' });
+        }
+
+        // Authorization logic: Only the assigned doctor or an Admin can delete a record
+        const isAuthorized = (record.doctor_id === userId) || (userRole === 'admin');
+
+        if (!isAuthorized) {
+            return res.status(403).json({ message: 'Forbidden: You do not have permission to delete this record.' });
+        }
+        
+        // 2. Perform Deletion
+        await recordModel.deleteRecord(recordId);
+
+        res.json({ message: 'Medical record deleted successfully.' });
+
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to delete medical record: ' + err.message });
+    }
+};
