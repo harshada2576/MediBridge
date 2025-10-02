@@ -1,6 +1,13 @@
+// backend/src/app.js - FINAL CORRECTED PATH
+
 const express = require('express');
+const cors = require('cors'); 
 const app = express();
-const apiRouter = require('./routes/api');
+// Correct the path: go up one level from src/ to backend/, then into routes/
+const apiRouter = require('../routes/api'); // <--- CORRECTED PATH: '../routes/api'
+
+// Configure CORS to allow access from the frontend
+app.use(cors());
 
 app.use(express.json()); // Parse JSON bodies
 app.use('/api', apiRouter);
