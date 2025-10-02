@@ -210,7 +210,7 @@
                         <span class="text-white font-semibold text-lg">SJ</span>
                     </div>
                     <div>
-                        <p class="font-medium text-gray-800 dark:text-white">Dr. Sarah Johnson</p>
+                        <p class="font-medium text-gray-800 dark:text-white currentUser-name">Dr. Sarah Johnson</p>
                         <p class="text-sm text-gray-600 dark:text-gray-300">Cardiologist</p>
                         <div class="flex items-center mt-1">
                             <div class="status-indicator status-online"></div>
@@ -343,7 +343,7 @@
                                     <span class="text-white font-semibold text-sm">SJ</span>
                                 </div>
                                 <div class="hidden md:block text-left">
-                                    <p class="text-sm font-medium text-gray-800 dark:text-white">Dr. Sarah Johnson</p>
+                                    <p class="text-sm font-medium text-gray-800 dark:text-white currentUser-name">Dr. Sarah Johnson</p>
                                     <p class="text-xs text-gray-600 dark:text-gray-300">Cardiologist</p>
                                 </div>
                                 <i class="fas fa-chevron-down text-gray-400 text-xs"></i>
@@ -417,7 +417,7 @@
                     <div class="relative z-10">
                         <div class="flex flex-col md:flex-row justify-between items-start md:items-center">
                             <div>
-                                <h2 class="text-4xl font-bold mb-3">Welcome back, Dr. Johnson!</h2>
+                                <h2 class="text-4xl font-bold mb-3" id="welcomeName">Welcome back, Dr. Johnson!</h2>
                                 <p class="text-purple-100 text-xl mb-4">You have 8 appointments scheduled for today</p>
                                 <div class="flex items-center space-x-4">
                                     <div class="bg-white bg-opacity-20 rounded-lg px-4 py-2">
@@ -549,52 +549,8 @@
                                 class="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400">View
                                 Calendar</button>
                         </div>
-                        <div class="space-y-4">
-                            <div
-                                class="flex items-center space-x-4 p-4 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 rounded-xl border-l-4 border-blue-500">
-                                <div class="text-center min-w-0">
-                                    <p class="text-lg font-bold text-blue-600 dark:text-blue-400">10:00</p>
-                                    <p class="text-xs text-blue-500 dark:text-blue-300">AM</p>
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <p class="font-semibold text-gray-800 dark:text-white">John Smith</p>
-                                    <p class="text-sm text-gray-600 dark:text-gray-300">Cardiology Follow-up</p>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">Room 201 • 30 min</p>
-                                </div>
-                                <button onclick="startConsultation('john-smith')"
-                                    class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-blue-700 transition-colors shadow-lg">
-                                    Start
-                                </button>
-                            </div>
-
-                            <div class="flex items-center space-x-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
-                                <div class="text-center min-w-0">
-                                    <p class="text-lg font-bold text-gray-600 dark:text-gray-400">11:00</p>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">AM</p>
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <p class="font-semibold text-gray-800 dark:text-white">Maria Rodriguez</p>
-                                    <p class="text-sm text-gray-600 dark:text-gray-300">Initial Consultation</p>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">Room 201 • 45 min</p>
-                                </div>
-                                <span
-                                    class="text-gray-400 text-sm px-3 py-1 bg-gray-200 dark:bg-gray-600 rounded-full">Waiting</span>
-                            </div>
-
-                            <div
-                                class="flex items-center space-x-4 p-4 bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 rounded-xl border-l-4 border-red-500">
-                                <div class="text-center min-w-0">
-                                    <p class="text-lg font-bold text-red-600 dark:text-red-400">2:00</p>
-                                    <p class="text-xs text-red-500 dark:text-red-300">PM</p>
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <p class="font-semibold text-gray-800 dark:text-white">Robert Wilson</p>
-                                    <p class="text-sm text-gray-600 dark:text-gray-300">Urgent - Chest Pain</p>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">Room 205 • Emergency</p>
-                                </div>
-                                <span
-                                    class="bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300 px-3 py-1 rounded-full text-xs font-medium animate-pulse">Urgent</span>
-                            </div>
+                        <div class="space-y-4" id="todaysScheduleList">
+                            <p class="text-gray-500 p-4">Loading today's schedule...</p>
                         </div>
                         <button onclick="showSection('appointments')"
                             class="w-full mt-6 text-blue-600 hover:text-blue-800 dark:text-blue-400 text-sm font-medium py-2 border border-blue-200 dark:border-blue-700 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
@@ -717,54 +673,8 @@
                                         Actions</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <tr
-                                    class="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
-                                    <td class="py-4 px-4">
-                                        <div class="flex items-center space-x-3">
-                                            <div
-                                                class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-                                                <span class="text-white font-semibold text-sm">JS</span>
-                                            </div>
-                                            <div>
-                                                <p class="font-semibold text-gray-800 dark:text-white">John Smith</p>
-                                                <p class="text-sm text-gray-600 dark:text-gray-400">john.smith@email.com
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="py-4 px-4">
-                                        <p class="font-medium text-gray-800 dark:text-white">Dec 20, 2024</p>
-                                        <p class="text-sm text-gray-600 dark:text-gray-400">10:00 AM - 10:30 AM</p>
-                                    </td>
-                                    <td class="py-4 px-4">
-                                        <span
-                                            class="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 px-3 py-1 rounded-full text-sm">Follow-up</span>
-                                    </td>
-                                    <td class="py-4 px-4">
-                                        <span
-                                            class="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 px-3 py-1 rounded-full text-sm">Confirmed</span>
-                                    </td>
-                                    <td class="py-4 px-4">
-                                        <div class="flex items-center space-x-2">
-                                            <button
-                                                class="tooltip text-blue-600 hover:text-blue-800 dark:text-blue-400 p-2 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20"
-                                                data-tooltip="Start Consultation" aria-label="Start Consultation">
-                                                <i class="fas fa-play"></i>
-                                            </button>
-                                            <button
-                                                class="tooltip text-green-600 hover:text-green-800 dark:text-green-400 p-2 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20"
-                                                data-tooltip="Edit" aria-label="Edit Appointment">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button
-                                                class="tooltip text-red-600 hover:text-red-800 dark:text-red-400 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20"
-                                                data-tooltip="Cancel" aria-label="Cancel Appointment">
-                                                <i class="fas fa-times"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
+                            <tbody id="fullAppointmentsTableBody">
+                                <p class="text-gray-500 p-4">Loading full appointment list...</p>
                             </tbody>
                         </table>
                     </div>
